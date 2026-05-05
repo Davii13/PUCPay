@@ -70,71 +70,95 @@ Abaixo, apresentamos a representação das entidades e seus relacionamentos base
 
 ```mermaid
 erDiagram
-    INSTITUICAO ||--o{ ALUNO : possui
-    INSTITUICAO ||--o{ PROFESSOR : vincula
-    
     USUARIO {
-        int id
-        string login
-        string senha
-        string tipo
-    }
-    
-    ALUNO {
+        int id PK
         string nome
         string email
         string cpf
+        string senha
+        decimal saldoMoedas
+    }
+    
+    ALUNO {
         string rg
-        string endereco
         string curso
-        float saldo
     }
     
     PROFESSOR {
-        string nome
-        string cpf
         string departamento
-        float saldo
+    }
+    
+    INSTITUICAO {
+        int id PK
+        string nome
+        string endereco
+    }
+    
+    ENDERECO {
+        int id PK
+        string rua
+        string cidade
+        string estado
+        string cep
+        string pais
+    }
+    
+    NOTIFICACAO {
+        int id PK
+        datetime data
+        string mensagem
     }
     
     EMPRESA {
+        string cnpj PK
         string nome
+        string email
+        string senha
     }
     
     VANTAGEM {
-        int id
-        string descricao
-        string foto_url
-        float custo
-    }
-    
-    TRANSACAO {
-        int id
-        datetime data
-        float valor
+        int id PK
         string tipo
-    }
-    
-    ENVIO_MOEDA {
-        string motivo
+        int custoMoedas
+        string descricao
+        string fotoUrl
     }
     
     RESGATE_VANTAGEM {
-        string codigo_cupom
+        int id PK
+        datetime data
+    }
+    
+    TRANSACAO {
+        int id PK
+        decimal valor
+        datetime data
+        string tipo
+        string motivo
+        string codigoVerificacao
+    }
+    
+    PUC_COIN {
+        int id PK
+        decimal valorEmReais
     }
 
     USUARIO ||--|| ALUNO : "é um"
     USUARIO ||--|| PROFESSOR : "é um"
-    USUARIO ||--|| EMPRESA : "é um"
     
-    PROFESSOR ||--o{ ENVIO_MOEDA : realiza
-    ALUNO ||--o{ ENVIO_MOEDA : recebe
-    ALUNO ||--o{ RESGATE_VANTAGEM : solicita
-    EMPRESA ||--o{ VANTAGEM : oferece
-    VANTAGEM ||--o{ RESGATE_VANTAGEM : gera
+    USUARIO ||--o{ ENDERECO : possui
+    USUARIO ||--o{ NOTIFICACAO : recebe
+    USUARIO ||--o{ TRANSACAO : realiza
+    USUARIO ||--o{ RESGATE_VANTAGEM : resgata
     
-    TRANSACAO ||--|| ENVIO_MOEDA : "tipo"
-    TRANSACAO ||--|| RESGATE_VANTAGEM : "tipo"
+    EMPRESA ||--|{ VANTAGEM : oferece
+    VANTAGEM ||--o{ RESGATE_VANTAGEM : "é resgatada por"
+    
+    PROFESSOR ||--o{ TRANSACAO : envia
+    ALUNO ||--o{ TRANSACAO : recebe
+    
+    INSTITUICAO ||--o{ PROFESSOR : possui
+    INSTITUICAO ||--o{ ALUNO : possui
 ```
 
 ---
