@@ -3,16 +3,25 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 export type UserRole = "student" | "professor" | "company";
 
 export interface User {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
+  nome?: string;
   email: string;
+  login?: string;
+  senha?: string;
   role: UserRole;
   avatar?: string;
-  balance: number;
+  balance?: number;
+  saldo?: number;
   institution?: string;
   course?: string;
+  curso?: string;
   department?: string;
   companyName?: string;
+  cpf?: string;
+  rg?: string;
+  endereco?: string;
+  cnpj?: string;
 }
 
 interface AuthContextType {
@@ -21,9 +30,10 @@ interface AuthContextType {
   login: (email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
   register: (data: RegisterData) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
-interface RegisterData {
+export interface RegisterData {
   name: string;
   email: string;
   password: string;
@@ -32,41 +42,15 @@ interface RegisterData {
   course?: string;
   department?: string;
   companyName?: string;
+  cpf?: string;
+  rg?: string;
+  endereco?: string;
+  cnpj?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mockUsers: Record<string, User> = {
-  "student@puc.br": {
-    id: "1",
-    name: "Maria Silva",
-    email: "student@puc.br",
-    role: "student",
-    balance: 1250,
-    institution: "PUC Minas",
-    course: "Ciência da Computação",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
-  },
-  "professor@puc.br": {
-    id: "2",
-    name: "Dr. João Santos",
-    email: "professor@puc.br",
-    role: "professor",
-    balance: 5000,
-    institution: "PUC Minas",
-    department: "Departamento de Computação",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Joao",
-  },
-  "empresa@parceiro.com": {
-    id: "3",
-    name: "Carlos Oliveira",
-    email: "empresa@parceiro.com",
-    role: "company",
-    balance: 0,
-    companyName: "TechCorp Solutions",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos",
-  },
-};
+const API_URL = "http://localhost:8080/api";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -79,14 +63,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string, role: UserRole) => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const endpoint = role === "student" ? "/alunos" : role === "company" ? "/empresas" : "/professores";
+      
+      if (!endpoint) {
+        throw new Error("Credenciais inválidas");
+      }
 
-    const mockUser = mockUsers[email];
-    if (mockUser && mockUser.role === role) {
-      setUser(mockUser);
-      localStorage.setItem("pucpay_user", JSON.stringify(mockUser));
-    } else {
-      throw new Error("Credenciais inválidas");
+      const response = await fetch(`${API_URL}${endpoint}`);
+      if (!response.ok) throw new Error("Erro na comunicação com o servidor");
+      
+      const users: User[] = await response.json();
+      const foundUser = users.find(u => u.email === email && u.senha === password);
+
+      if (foundUser) {
+        const loggedUser: User = {
+          ...foundUser,
+          name: foundUser.nome || foundUser.name,
+          course: foundUser.curso || foundUser.course,
+          balance: foundUser.saldo || foundUser.balance || 0,
+          role: role,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${foundUser.nome}`,
+        };
+        setUser(loggedUser);
+        localStorage.setItem("pucpay_user", JSON.stringify(loggedUser));
+      } else {
+        throw new Error("Credenciais inválidas");
+      }
+    } catch (error) {
+      console.error(error);
+      throw new Error("Falha no login ou credenciais incorretas.");
     }
   };
 
@@ -96,23 +102,116 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: RegisterData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: data.name,
+    let endpoint = "";
+    let payload: any = {
+      nome: data.name,
       email: data.email,
-      role: data.role,
-      balance: data.role === "professor" ? 5000 : 0,
-      institution: data.institution,
-      course: data.course,
-      department: data.department,
-      companyName: data.companyName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name}`,
+      login: data.email,
+      senha: data.password,
     };
 
-    setUser(newUser);
-    localStorage.setItem("pucpay_user", JSON.stringify(newUser));
+    if (data.role === "student") {
+      endpoint = "/alunos";
+      payload = {
+        ...payload,
+        cpf: data.cpf,
+        rg: data.rg,
+        endereco: data.endereco,
+        curso: data.course || "Não informado",
+        saldo: 0.0
+      };
+    } else if (data.role === "company") {
+      endpoint = "/empresas";
+      payload = {
+        ...payload,
+        cnpj: data.cnpj,
+      };
+    } else {
+      endpoint = "/professores";
+      payload = {
+        ...payload,
+        cpf: data.cpf,
+        departamento: data.department || "Não informado",
+        saldo: 5000.0
+      };
+    }
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao cadastrar usuário no sistema.");
+      }
+
+      const createdUser = await response.json();
+      const newUser: User = {
+        ...createdUser,
+        name: createdUser.nome,
+        course: createdUser.curso,
+        balance: createdUser.saldo || 0,
+        role: data.role,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${createdUser.nome}`,
+      };
+
+      setUser(newUser);
+      localStorage.setItem("pucpay_user", JSON.stringify(newUser));
+    } catch (error) {
+      console.error(error);
+      throw new Error("Erro de comunicação com o servidor.");
+    }
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    if (!user || !user.id) return;
+    
+    let endpoint = "";
+    if (user.role === "student") endpoint = `/alunos/${user.id}`;
+    else if (user.role === "company") endpoint = `/empresas/${user.id}`;
+    else endpoint = `/professores/${user.id}`;
+
+    const payload = {
+      ...user,
+      nome: data.name || user.name || user.nome,
+      email: data.email || user.email,
+      login: data.email || user.login || user.email,
+      cpf: data.cpf || user.cpf,
+      rg: data.rg || user.rg,
+      endereco: data.endereco || user.endereco,
+      curso: data.course || user.curso || user.course,
+      departamento: data.department || user.department,
+      cnpj: data.cnpj || user.cnpj,
+      senha: data.senha || user.senha || "123456" // Assuming it must be provided for update
+    };
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao atualizar perfil no servidor.");
+      }
+
+      const updatedData = await response.json();
+      const updatedUser: User = {
+        ...user,
+        ...updatedData,
+        name: updatedData.nome || updatedData.name,
+        course: updatedData.curso || updatedData.course,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("pucpay_user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error(error);
+      throw new Error("Falha na atualização do perfil.");
+    }
   };
 
   return (
@@ -123,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         register,
+        updateProfile,
       }}
     >
       {children}

@@ -20,6 +20,10 @@ export function Register() {
     course: "",
     department: "",
     companyName: "",
+    cpf: "",
+    rg: "",
+    endereco: "",
+    cnpj: "",
   });
   const [role, setRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
@@ -51,6 +55,10 @@ export function Register() {
         course: formData.course,
         department: formData.department,
         companyName: formData.companyName,
+        cpf: formData.cpf,
+        rg: formData.rg,
+        endereco: formData.endereco,
+        cnpj: formData.cnpj,
       });
       toast.success("Conta criada com sucesso!");
       navigate(role === "student" ? "/student" : role === "professor" ? "/professor" : "/company");
@@ -151,6 +159,39 @@ export function Register() {
                 {role === "student" && (
                   <>
                     <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        name="cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.cpf}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="rg">RG</Label>
+                      <Input
+                        id="rg"
+                        name="rg"
+                        placeholder="MG-00.000.000"
+                        value={formData.rg}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="endereco">Endereço</Label>
+                      <Input
+                        id="endereco"
+                        name="endereco"
+                        placeholder="Ex: Rua A, 123"
+                        value={formData.endereco}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="institution">Instituição</Label>
                       <Input
                         id="institution"
@@ -176,6 +217,17 @@ export function Register() {
                 {role === "professor" && (
                   <>
                     <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        name="cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.cpf}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="institution">Instituição</Label>
                       <Input
                         id="institution"
@@ -199,16 +251,29 @@ export function Register() {
                 )}
 
                 {role === "company" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Nome da Empresa</Label>
-                    <Input
-                      id="companyName"
-                      name="companyName"
-                      placeholder="Ex: TechCorp Solutions"
-                      value={formData.companyName}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Nome da Empresa</Label>
+                      <Input
+                        id="companyName"
+                        name="companyName"
+                        placeholder="Ex: TechCorp Solutions"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cnpj">CNPJ</Label>
+                      <Input
+                        id="cnpj"
+                        name="cnpj"
+                        placeholder="00.000.000/0001-00"
+                        value={formData.cnpj}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </>
                 )}
 
                 <div className="space-y-2">

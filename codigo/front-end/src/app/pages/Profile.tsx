@@ -6,20 +6,24 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Separator } from "../components/ui/separator";
-import { User, Mail, GraduationCap, Building2, Lock, Save, Camera } from "lucide-react";
+import { User, Mail, GraduationCap, Building2, Lock, Save, Camera, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 
 export function Profile() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
+    name: user?.name || user?.nome || "",
     email: user?.email || "",
     institution: user?.institution || "",
-    course: user?.course || "",
+    course: user?.course || user?.curso || "",
     department: user?.department || "",
     companyName: user?.companyName || "",
+    cpf: user?.cpf || "",
+    rg: user?.rg || "",
+    endereco: user?.endereco || "",
+    cnpj: user?.cnpj || "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -28,9 +32,19 @@ export function Profile() {
     confirmPassword: "",
   });
 
-  const handleSaveProfile = () => {
-    toast.success("Perfil atualizado com sucesso!");
-    setIsEditing(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await updateProfile(formData);
+      toast.success("Perfil atualizado com sucesso!");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error("Erro ao atualizar o perfil");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePassword = () => {
@@ -158,6 +172,42 @@ export function Profile() {
                 {user?.role === "student" && (
                   <>
                     <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        value={formData.cpf}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cpf: e.target.value })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="rg">RG</Label>
+                      <Input
+                        id="rg"
+                        value={formData.rg}
+                        onChange={(e) =>
+                          setFormData({ ...formData, rg: e.target.value })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="endereco">Endereço</Label>
+                      <Input
+                        id="endereco"
+                        value={formData.endereco}
+                        onChange={(e) =>
+                          setFormData({ ...formData, endereco: e.target.value })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="institution">Instituição</Label>
                       <Input
                         id="institution"
@@ -186,6 +236,17 @@ export function Profile() {
                 {user?.role === "professor" && (
                   <>
                     <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        value={formData.cpf}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cpf: e.target.value })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="institution">Instituição</Label>
                       <Input
                         id="institution"
@@ -212,17 +273,30 @@ export function Profile() {
                 )}
 
                 {user?.role === "company" && (
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="companyName">Nome da Empresa</Label>
-                    <Input
-                      id="companyName"
-                      value={formData.companyName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, companyName: e.target.value })
-                      }
-                      disabled={!isEditing}
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="companyName">Nome da Empresa</Label>
+                      <Input
+                        id="companyName"
+                        value={formData.companyName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, companyName: e.target.value })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="cnpj">CNPJ</Label>
+                      <Input
+                        id="cnpj"
+                        value={formData.cnpj}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cnpj: e.target.value })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -239,8 +313,9 @@ export function Profile() {
                     <Button
                       onClick={handleSaveProfile}
                       className="bg-gradient-to-r from-purple-500 to-purple-700"
+                      disabled={saving}
                     >
-                      <Save className="w-4 h-4 mr-2" />
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                       Salvar alterações
                     </Button>
                     <Button
