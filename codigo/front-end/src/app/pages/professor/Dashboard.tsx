@@ -8,38 +8,29 @@ import { Textarea } from "../../components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Coins, Send, TrendingDown, ArrowUpRight, Users, Calendar } from "lucide-react";
-import { mockStudents, Transaction } from "../../data/mockData";
 import { motion } from "motion/react";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { toast } from "sonner";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useEffect } from "react";
+import { fetchApi } from "../../services/api";
 
 export function ProfessorDashboard() {
-  const { user } = useAuth();
+  const { user, updateLocalBalance } = useAuth();
   const [open, setOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
-  const [sentTransactions, setSentTransactions] = useState<Transaction[]>([
-    {
-      id: "1",
-      type: "send",
-      amount: -100,
-      description: "Participação em projeto de pesquisa",
-      date: new Date(2026, 3, 28),
-      to: "Maria Silva",
-      message: "Excelente trabalho no projeto de IA!",
-    },
-    {
-      id: "2",
-      type: "send",
-      amount: -75,
-      description: "Monitoria de Programação",
-      date: new Date(2026, 3, 25),
-      to: "Pedro Santos",
-      message: "Continue com o bom trabalho!",
-    },
-  ]);
+  const [sentTransactions, setSentTransactions] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchApi(`/transacoes/professor/${user.id}`).then(setSentTransactions).catch(console.error);
+      fetchApi("/alunos").then(setStudents).catch(console.error);
+    }
+  }, [user]);
 
   const distributionData = [
     { month: "Jan", distributed: 450 },
@@ -50,32 +41,40 @@ export function ProfessorDashboard() {
 
   const thisMonthDistributed = distributionData[3].distributed;
 
-  const handleSendCoins = () => {
+  const handleSendCoins = async () => {
     if (!selectedStudent || !amount || !message) {
       toast.error("Preencha todos os campos");
       return;
     }
 
-    const student = mockStudents.find((s) => s.id === selectedStudent);
+    const student = students.find((s) => s.id.toString() === selectedStudent);
     if (!student) return;
 
-    const newTransaction: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
-      type: "send",
-      amount: -parseInt(amount),
-      description: message,
-      date: new Date(),
-      to: student.name,
-      message: message,
-    };
+    try {
+      setLoading(true);
+      const transaction = await fetchApi("/transacoes/enviar", {
+        method: "POST",
+        body: JSON.stringify({
+          professorId: user?.id,
+          alunoId: student.id,
+          valor: parseFloat(amount),
+          mensagem: message
+        })
+      });
 
-    setSentTransactions([newTransaction, ...sentTransactions]);
-    toast.success(`${amount} moedas enviadas para ${student.name}!`);
+      setSentTransactions([transaction, ...sentTransactions]);
+      updateLocalBalance((user?.balance || 0) - parseFloat(amount));
+      toast.success(`${amount} moedas enviadas para ${student.nome}!`);
 
-    setSelectedStudent("");
-    setAmount("");
-    setMessage("");
-    setOpen(false);
+      setSelectedStudent("");
+      setAmount("");
+      setMessage("");
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar moedas");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,16 +116,16 @@ export function ProfessorDashboard() {
                       <SelectValue placeholder="Escolha um aluno" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockStudents.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
+                      {students.map((student) => (
+                        <SelectItem key={student.id} value={student.id.toString()}>
                           <div className="flex items-center gap-2">
                             <Avatar className="w-6 h-6">
-                              <AvatarImage src={student.avatar} />
-                              <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.nome}`} />
+                              <AvatarFallback>{student.nome.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="text-sm font-medium">{student.name}</p>
-                              <p className="text-xs text-gray-500">{student.course}</p>
+                              <p className="text-sm font-medium">{student.nome}</p>
+                              <p className="text-xs text-gray-500">{student.curso}</p>
                             </div>
                           </div>
                         </SelectItem>
@@ -293,24 +292,19 @@ export function ProfessorDashboard() {
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {transaction.to}
+                          Para: {transaction.destinatario?.nome}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {transaction.description}
+                          {transaction.mensagem}
                         </p>
                       </div>
                       <p className="font-semibold text-purple-600 dark:text-purple-400 whitespace-nowrap">
-                        {transaction.amount} moedas
+                        -{transaction.valor} moedas
                       </p>
                     </div>
-                    {transaction.message && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2">
-                        "{transaction.message}"
-                      </p>
-                    )}
                     <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" />
-                      {transaction.date.toLocaleDateString("pt-BR")}
+                      {new Date(transaction.dataHora).toLocaleDateString("pt-BR")}
                     </div>
                   </div>
                 </motion.div>

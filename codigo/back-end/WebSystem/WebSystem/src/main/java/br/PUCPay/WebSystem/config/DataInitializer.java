@@ -28,6 +28,12 @@ public class DataInitializer {
                         entityManager.persist(inst);
                     }
                 }
+                
+                if (entityManager.createQuery("select count(a) from Admin a", Long.class).getSingleResult() == 0) {
+                    br.PUCPay.WebSystem.model.Admin admin = new br.PUCPay.WebSystem.model.Admin("Administrador", "admin@pucpay.com", "admin", "admin123");
+                    entityManager.persist(admin);
+                }
+
                 return null;
             });
         };

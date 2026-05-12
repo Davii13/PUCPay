@@ -2,29 +2,44 @@ import { useAuth } from "../../context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Coins, TrendingUp, ArrowUpRight, ArrowDownRight, Gift, Eye } from "lucide-react";
-import { mockTransactions, mockBenefits } from "../../data/mockData";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Badge } from "../../components/ui/badge";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useEffect, useState } from "react";
+import { fetchApi } from "../../services/api";
 
 export function StudentDashboard() {
   const { user } = useAuth();
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [recommendedBenefits, setRecommendedBenefits] = useState<any[]>([]);
+  const [thisMonthEarned, setThisMonthEarned] = useState(0);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchApi(`/transacoes/aluno/${user.id}`).then(data => {
+        setRecentTransactions(data.slice(0, 5));
+        
+        const currentMonth = new Date().getMonth();
+        const earned = data
+          .filter((t: any) => t.tipo === "ENVIO" && new Date(t.dataHora).getMonth() === currentMonth)
+          .reduce((sum: number, t: any) => sum + t.valor, 0);
+        setThisMonthEarned(earned);
+      }).catch(console.error);
+
+      fetchApi("/vantagens").then(data => {
+        setRecommendedBenefits(data.slice(0, 3));
+      }).catch(console.error);
+    }
+  }, [user]);
 
   const balanceHistory = [
-    { month: "Jan", balance: 800 },
-    { month: "Fev", balance: 950 },
-    { month: "Mar", balance: 1100 },
-    { month: "Abr", balance: 1250 },
+    { month: "Jan", balance: 0 },
+    { month: "Fev", balance: 0 },
+    { month: "Mar", balance: 0 },
+    { month: "Abr", balance: user?.balance || 0 },
   ];
-
-  const recentTransactions = mockTransactions.slice(0, 5);
-  const recommendedBenefits = mockBenefits.slice(0, 3);
-
-  const thisMonthEarned = mockTransactions
-    .filter((t) => t.type === "receive" && t.date.getMonth() === 3)
-    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -155,12 +170,12 @@ export function StudentDashboard() {
                   >
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        transaction.type === "receive"
+                        transaction.tipo === "ENVIO"
                           ? "bg-green-100 dark:bg-green-900/20"
                           : "bg-red-100 dark:bg-red-900/20"
                       }`}
                     >
-                      {transaction.type === "receive" ? (
+                      {transaction.tipo === "ENVIO" ? (
                         <ArrowDownRight className="w-5 h-5 text-green-600 dark:text-green-400" />
                       ) : (
                         <ArrowUpRight className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -168,22 +183,22 @@ export function StudentDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                        {transaction.description}
+                        {transaction.mensagem || transaction.vantagem?.titulo}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {transaction.from || transaction.to}
+                        {transaction.tipo === "ENVIO" ? transaction.remetente?.nome : transaction.vantagem?.empresa?.nome}
                       </p>
                     </div>
                     <div className="text-right">
                       <p
                         className={`font-semibold ${
-                          transaction.type === "receive"
+                          transaction.tipo === "ENVIO"
                             ? "text-green-600 dark:text-green-400"
                             : "text-red-600 dark:text-red-400"
                         }`}
                       >
-                        {transaction.type === "receive" ? "+" : ""}
-                        {transaction.amount}
+                        {transaction.tipo === "ENVIO" ? "+" : "-"}
+                        {transaction.valor}
                       </p>
                     </div>
                   </motion.div>
@@ -220,22 +235,22 @@ export function StudentDashboard() {
                     className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
                     <img
-                      src={benefit.image}
-                      alt={benefit.title}
+                      src={benefit.fotoUrl || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=200&auto=format&fit=crop"}
+                      alt={benefit.titulo}
                       className="w-16 h-16 rounded-lg object-cover"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                        {benefit.title}
+                        {benefit.titulo}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        {benefit.company}
+                        {benefit.empresa?.nome}
                       </p>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">
-                          {benefit.cost} moedas
+                          {benefit.custo} moedas
                         </Badge>
-                        {benefit.cost <= (user?.balance || 0) && (
+                        {benefit.custo <= (user?.balance || 0) && (
                           <Badge variant="outline" className="text-xs text-green-600 border-green-600">
                             Disponível
                           </Badge>

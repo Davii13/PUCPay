@@ -47,7 +47,7 @@ export function Register() {
 
     try {
       await register({
-        name: formData.name,
+        name: role === "company" ? formData.companyName : formData.name,
         email: formData.email,
         password: formData.password,
         role,
@@ -61,7 +61,8 @@ export function Register() {
         cnpj: formData.cnpj,
       });
       toast.success("Conta criada com sucesso!");
-      navigate(role === "student" ? "/student" : role === "professor" ? "/professor" : "/company");
+      toast.success("Conta criada com sucesso! Faça login para continuar.");
+      navigate("/auth/login");
     } catch (error) {
       toast.error("Erro ao criar conta. Tente novamente.");
     } finally {

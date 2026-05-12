@@ -4,44 +4,66 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { mockTransactions } from "../data/mockData";
-import { Receipt, ArrowDownRight, ArrowUpRight, Download, Filter, Calendar } from "lucide-react";
+import { Receipt, ArrowDownRight, ArrowUpRight, Download, Calendar } from "lucide-react";
 import { motion } from "motion/react";
 import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useEffect } from "react";
+import { fetchApi } from "../services/api";
 
 export function Transactions() {
   const { user } = useAuth();
   const [filterType, setFilterType] = useState<"all" | "receive" | "send" | "redeem">("all");
   const [filterPeriod, setFilterPeriod] = useState<"all" | "month" | "week">("all");
+  const [transactions, setTransactions] = useState<any[]>([]);
 
-  const filteredTransactions = mockTransactions.filter((transaction) => {
-    const typeMatch = filterType === "all" || transaction.type === filterType;
+  useEffect(() => {
+    if (user?.id) {
+      let endpoint = `/transacoes/aluno/${user.id}`;
+      if (user.role === "professor") {
+        endpoint = `/transacoes/professor/${user.id}`;
+      } else if (user.role === "admin") {
+        return; // Admins don't have personal transactions in this flow
+      }
+      
+      fetchApi(endpoint).then(setTransactions).catch(console.error);
+    }
+  }, [user]);
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    // Map API types to local types
+    let localType = transaction.tipo === "ENVIO" ? "receive" : "redeem";
+    if (user?.role === "professor") {
+      localType = "send";
+    }
+
+    const typeMatch = filterType === "all" || localType === filterType;
 
     let periodMatch = true;
+    const txDate = new Date(transaction.dataHora);
     if (filterPeriod === "month") {
       const now = new Date();
-      periodMatch = isWithinInterval(transaction.date, {
+      periodMatch = isWithinInterval(txDate, {
         start: startOfMonth(now),
         end: endOfMonth(now),
       });
     } else if (filterPeriod === "week") {
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      periodMatch = transaction.date >= weekAgo;
+      periodMatch = txDate >= weekAgo;
     }
 
     return typeMatch && periodMatch;
   });
 
   const totalReceived = filteredTransactions
-    .filter((t) => t.type === "receive")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter((t) => t.tipo === "ENVIO" && user?.role === "student")
+    .reduce((sum, t) => sum + t.valor, 0);
 
   const totalSpent = Math.abs(
     filteredTransactions
-      .filter((t) => t.type === "redeem")
-      .reduce((sum, t) => sum + t.amount, 0)
+      .filter((t) => t.tipo === "RESGATE" || user?.role === "professor")
+      .reduce((sum, t) => sum + t.valor, 0)
   );
 
   const getTransactionIcon = (type: string) => {
@@ -77,11 +99,17 @@ export function Transactions() {
     }
   };
 
+  const getLocalType = (t: any) => {
+    if (user?.role === "professor") return "send";
+    if (t.tipo === "ENVIO") return "receive";
+    return "redeem";
+  };
+
   const groupTransactionsByDate = () => {
     const grouped: Record<string, typeof filteredTransactions> = {};
 
     filteredTransactions.forEach((transaction) => {
-      const dateKey = format(transaction.date, "yyyy-MM-dd");
+      const dateKey = format(new Date(transaction.dataHora), "yyyy-MM-dd");
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
@@ -251,51 +279,54 @@ export function Transactions() {
                       })}
                     </div>
 
-                    {transactions.map((transaction) => (
+                    {transactions.map((transaction) => {
+                      const localType = getLocalType(transaction);
+                      return (
                       <motion.div
                         key={transaction.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow"
                       >
-                        {getTransactionIcon(transaction.type)}
+                        {getTransactionIcon(localType)}
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <div className="flex-1">
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {transaction.description}
+                                {transaction.mensagem || transaction.vantagem?.titulo || "Transação"}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                                {transaction.from && `De: ${transaction.from}`}
-                                {transaction.to && `Para: ${transaction.to}`}
+                                {transaction.remetente && `De: ${transaction.remetente.nome}`}
+                                {transaction.destinatario && ` | Para: ${transaction.destinatario.nome}`}
+                                {transaction.vantagem && ` | Para: ${transaction.vantagem.empresa?.nome}`}
                               </p>
                             </div>
                             <div className="text-right">
                               <p
                                 className={`font-bold text-lg ${
-                                  transaction.type === "receive"
+                                  localType === "receive"
                                     ? "text-green-600 dark:text-green-400"
                                     : "text-red-600 dark:text-red-400"
                                 }`}
                               >
-                                {transaction.type === "receive" ? "+" : ""}
-                                {transaction.amount}
+                                {localType === "receive" ? "+" : "-"}
+                                {transaction.valor}
                               </p>
                               <Badge variant="secondary" className="mt-1">
-                                {getTransactionTypeLabel(transaction.type)}
+                                {getTransactionTypeLabel(localType)}
                               </Badge>
                             </div>
                           </div>
 
-                          {transaction.message && (
+                          {transaction.codigoCupom && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              "{transaction.message}"
+                              Cupom: <span className="font-mono font-bold text-purple-600 dark:text-purple-400">{transaction.codigoCupom}</span>
                             </p>
                           )}
                         </div>
                       </motion.div>
-                    ))}
+                    )})}
                   </div>
                 ))}
 

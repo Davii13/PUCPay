@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "empresas")
@@ -12,11 +11,15 @@ import lombok.AllArgsConstructor;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@AllArgsConstructor
 public class Empresa extends Usuario {
 
-    @Column(nullable = false)
-    private String cnpj; // Adding CNPJ as it's common for companies, though not explicitly in text.
+    @Column(nullable = false, unique = true)
+    private String cnpj;
 
-    // Advantages will be added in a later phase or as a separate entity.
+    public Empresa(String nome, String email, String login, String senha, String cnpj) {
+        super();
+        setNome(nome); setEmail(email); setLogin(login); setSenha(senha); setRole(Role.EMPRESA);
+        this.cnpj = cnpj;
+    }
 }
+

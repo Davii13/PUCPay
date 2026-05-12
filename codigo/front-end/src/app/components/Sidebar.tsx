@@ -45,6 +45,11 @@ export function Sidebar() {
           { path: "/company", label: "Dashboard", icon: Home },
           ...commonItems,
         ];
+      case "admin":
+        return [
+          { path: "/admin", label: "Dashboard", icon: Home },
+          ...commonItems,
+        ];
       default:
         return commonItems;
     }
@@ -60,6 +65,8 @@ export function Sidebar() {
         return <Coins className="w-4 h-4" />;
       case "company":
         return <Building2 className="w-4 h-4" />;
+      case "admin":
+        return <Coins className="w-4 h-4" />;
       default:
         return null;
     }
@@ -73,6 +80,8 @@ export function Sidebar() {
         return "Professor";
       case "company":
         return "Empresa Parceira";
+      case "admin":
+        return "Administrador";
       default:
         return "";
     }

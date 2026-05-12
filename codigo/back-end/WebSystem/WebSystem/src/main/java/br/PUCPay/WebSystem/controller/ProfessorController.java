@@ -1,11 +1,15 @@
 package br.PUCPay.WebSystem.controller;
 
+import br.PUCPay.WebSystem.dao.InstituicaoDAO;
+import br.PUCPay.WebSystem.model.Instituicao;
 import br.PUCPay.WebSystem.model.Professor;
+import br.PUCPay.WebSystem.model.Usuario;
 import br.PUCPay.WebSystem.service.ProfessorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/professores")
@@ -15,9 +19,32 @@ public class ProfessorController {
     @Autowired
     private ProfessorService professorService;
 
+    @Autowired
+    private InstituicaoDAO instituicaoDAO;
+
     @PostMapping
-    public ResponseEntity<Professor> create(@RequestBody Professor professor) {
-        return ResponseEntity.ok(professorService.save(professor));
+    public ResponseEntity<?> create(@RequestBody Map<String, Object> payload) {
+        try {
+            Professor professor = new Professor();
+            professor.setNome(payload.get("nome").toString());
+            professor.setEmail(payload.get("email").toString());
+            professor.setLogin(payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
+            professor.setSenha(payload.get("senha").toString());
+            professor.setRole(Usuario.Role.PROFESSOR);
+            professor.setCpf(payload.getOrDefault("cpf", "").toString());
+            professor.setDepartamento(payload.getOrDefault("departamento", "Não informado").toString());
+            professor.setSaldo(1000.0);
+
+            if (payload.containsKey("instituicaoId") && payload.get("instituicaoId") != null) {
+                Long instId = Long.valueOf(payload.get("instituicaoId").toString());
+                Instituicao inst = instituicaoDAO.findById(instId);
+                professor.setInstituicao(inst);
+            }
+
+            return ResponseEntity.ok(professorService.save(professor));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        }
     }
 
     @GetMapping("/{id}")

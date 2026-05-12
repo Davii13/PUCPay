@@ -1,11 +1,13 @@
 package br.PUCPay.WebSystem.controller;
 
 import br.PUCPay.WebSystem.model.Empresa;
+import br.PUCPay.WebSystem.model.Usuario;
 import br.PUCPay.WebSystem.service.EmpresaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/empresas")
@@ -16,8 +18,19 @@ public class EmpresaController {
     private EmpresaService empresaService;
 
     @PostMapping
-    public ResponseEntity<Empresa> create(@RequestBody Empresa empresa) {
-        return ResponseEntity.ok(empresaService.save(empresa));
+    public ResponseEntity<?> create(@RequestBody Map<String, Object> payload) {
+        try {
+            Empresa empresa = new Empresa();
+            empresa.setNome(payload.get("nome").toString());
+            empresa.setEmail(payload.get("email").toString());
+            empresa.setLogin(payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
+            empresa.setSenha(payload.get("senha").toString());
+            empresa.setRole(Usuario.Role.EMPRESA);
+            empresa.setCnpj(payload.getOrDefault("cnpj", "").toString());
+            return ResponseEntity.ok(empresaService.save(empresa));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        }
     }
 
     @GetMapping("/{id}")

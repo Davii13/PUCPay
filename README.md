@@ -1,185 +1,172 @@
 # PUCPay - Sistema de Moeda Estudantil
 
-![PUCPay Logo](file:///C:/Users/davin/.gemini/antigravity/brain/bc46689b-969d-4bfb-babb-050e9ed68ac0/pucpay_logo_1777419030780.png)
-
-## 📝 Descrição do Projeto
-
-O **PUCPay** é uma plataforma gamificada de mérito estudantil que visa estimular o engajamento e o reconhecimento dos alunos através de uma moeda virtual. Professores podem distribuir moedas como recompensa por desempenho e comportamento, enquanto alunos podem trocar essas moedas por benefícios exclusivos oferecidos por empresas parceiras.
-
-Este sistema foi desenvolvido como parte das atividades da disciplina de Laboratório de Desenvolvimento de Software.
+O **PUCPay** é uma plataforma de mérito estudantil que utiliza gamificação para estimular o engajamento escolar. Através de uma economia virtual baseada em **PUCCoins**, professores podem recompensar alunos por desempenho e participação, enquanto empresas parceiras oferecem um catálogo de vantagens reais para troca.
 
 ---
 
-## 👥 Participantes
+## 🏗️ Arquitetura do Sistema
 
-- **Davi Nunes Carvalho**
-- **Joao Victor Russo Marquito**
+O projeto foi construído seguindo os princípios de **Clean Code** e **Responsabilidade Única**, utilizando uma separação clara entre a interface do usuário e o servidor de processamento.
 
----
+### 🏛️ Backend (Java Spring Boot)
+O backend é uma API RESTful robusta que segue o padrão de **Camadas**:
 
-## 🚀 Funcionalidades Principais
+1.  **Entidades (Model)**: Utiliza a estratégia `JOINED` de herança do Hibernate, permitindo uma base comum de `Usuário` com tabelas específicas para `Aluno`, `Professor`, `Empresa` e `Admin`.
+2.  **DAO (Data Access Object)**: Implementação de acesso a dados isolada, permitindo flexibilidade e facilidade de testes, fugindo do acoplamento direto com o Spring Data JPA em alguns pontos críticos.
+3.  **Serviços (Service)**: Camada onde reside a inteligência do sistema, como o processamento de transações, validação de saldos e regras de resgate.
+4.  **Controladores (REST)**: Endpoints documentados que expõem os recursos do sistema.
 
-### 🎓 Para Alunos
-- **Cadastro Completo**: Inclusão de dados pessoais (CPF, RG, Endereço) e vínculo com Instituição e Curso.
-- **Consulta de Extrato**: Visualização detalhada de moedas recebidas e trocas realizadas.
-- **Resgate de Vantagens**: Troca de moedas por descontos em mensalidades, materiais ou alimentação.
-- **Notificações**: Recebimento de alertas por e-mail a cada nova moeda ganha ou vantagem resgatada.
+### 🎨 Frontend (React + Vite)
+Uma Single Page Application (SPA) moderna focada em performance e UX:
 
-### 👨‍🏫 Para Professores
-- **Distribuição de Moedas**: Envio de até 1.000 moedas por semestre (acumuláveis) para alunos, com justificativa obrigatória.
-- **Gestão de Saldo**: Acompanhamento do saldo disponível para distribuição.
-- **Histórico de Envios**: Consulta de todas as transações realizadas para seus alunos.
-
-### 🏢 Para Empresas Parceiras
-- **Cadastro de Vantagens**: Registro de ofertas com descrição, foto e custo em moedas.
-- **Gestão de Parceria**: Acesso ao sistema para validar códigos de cupons apresentados pelos alunos.
-- **Notificações de Resgate**: Recebimento de e-mail com código de conferência a cada troca realizada.
+-   **Context API**: Gerenciamento de estado global para persistência de sessão e dados do perfil.
+-   **Hook Pattern**: Uso de hooks customizados para abstrair lógica de componentes.
+-   **Roteamento**: React Router 7 para navegação fluida e protegida por níveis de acesso.
+-   **Componentização**: Componentes agnósticos e reutilizáveis, garantindo consistência visual.
 
 ---
 
-## 🏗️ Arquitetura do Projeto
-
-O sistema segue uma arquitetura moderna e escalável, utilizando o padrão **MVC (Model-View-Controller)** no backend e uma separação clara de responsabilidades.
-
-### Divisão de Pastas (Backend Java/Spring)
-
-```text
-src/
-├── main/
-│   ├── java/com/pucpay/
-│   │   ├── config/          # Configurações de Segurança (JWT), E-mail e Swagger
-│   │   ├── controllers/     # Pontos de entrada da API (Endpoints REST)
-│   │   ├── dtos/            # Objetos de Transferência de Dados (Request/Response)
-│   │   ├── exceptions/      # Tratamento global de erros e exceções customizadas
-│   │   ├── models/          # Entidades do Banco de Dados (JPA/Hibernate)
-│   │   ├── repositories/    # Interfaces de acesso ao banco (Spring Data JPA)
-│   │   └── services/        # Lógica de negócio e integrações
-│   └── resources/
-│       ├── static/          # Arquivos estáticos (CSS, Imagens do Sistema)
-│       ├── templates/       # Templates de e-mail (Thymeleaf/FreeMarker)
-│       └── application.yml  # Configurações de ambiente e banco de dados
-```
-
----
-
-## 📊 Modelagem do Sistema
-
-### Diagrama Entidade-Relacionamento (ER)
-
-Abaixo, apresentamos a representação das entidades e seus relacionamentos baseada nas regras de negócio do sistema:
+## 📊 Modelagem de Dados (ERD)
 
 ```mermaid
 erDiagram
-    USUARIO {
-        int id PK
-        string nome
-        string email
-        string cpf
-        string senha
-        decimal saldoMoedas
+    Usuario {
+        Long id PK
+        String nome
+        String email
+        String login
+        String senha
+        String role
     }
-    
-    ALUNO {
-        string rg
-        string curso
+    Aluno {
+        String cpf
+        String rg
+        String curso
+        Double saldo
     }
-    
-    PROFESSOR {
-        string departamento
+    Professor {
+        String cpf
+        String departamento
+        Double saldo
     }
-    
-    INSTITUICAO {
-        int id PK
-        string nome
-        string endereco
+    Empresa {
+        String cnpj
     }
-    
-    ENDERECO {
-        int id PK
-        string rua
-        string cidade
-        string estado
-        string cep
-        string pais
+    Instituicao {
+        Long id PK
+        String nome
     }
-    
-    NOTIFICACAO {
-        int id PK
-        datetime data
-        string mensagem
+    Vantagem {
+        Long id PK
+        String titulo
+        String descricao
+        Double custo
+        String fotoUrl
     }
-    
-    EMPRESA {
-        string cnpj PK
-        string nome
-        string email
-        string senha
-    }
-    
-    VANTAGEM {
-        int id PK
-        string tipo
-        int custoMoedas
-        string descricao
-        string fotoUrl
-    }
-    
-    RESGATE_VANTAGEM {
-        int id PK
-        datetime data
-    }
-    
-    TRANSACAO {
-        int id PK
-        decimal valor
-        datetime data
-        string tipo
-        string motivo
-        string codigoVerificacao
-    }
-    
-    PUC_COIN {
-        int id PK
-        decimal valorEmReais
+    Transacao {
+        Long id PK
+        String tipo
+        Double valor
+        String mensagem
+        LocalDateTime dataHora
+        String codigoCupom
     }
 
-    USUARIO ||--|| ALUNO : "é um"
-    USUARIO ||--|| PROFESSOR : "é um"
+    Usuario ||--|| Aluno : "estende"
+    Usuario ||--|| Professor : "estende"
+    Usuario ||--|| Empresa : "estende"
     
-    USUARIO ||--o{ ENDERECO : possui
-    USUARIO ||--o{ NOTIFICACAO : recebe
-    USUARIO ||--o{ TRANSACAO : realiza
-    USUARIO ||--o{ RESGATE_VANTAGEM : resgata
+    Aluno ||--o{ Transacao : "histórico"
+    Professor ||--o{ Transacao : "histórico"
+    Empresa ||--o{ Vantagem : "oferece"
+    Vantagem ||--o{ Transacao : "venda"
     
-    EMPRESA ||--|{ VANTAGEM : oferece
-    VANTAGEM ||--o{ RESGATE_VANTAGEM : "é resgatada por"
-    
-    PROFESSOR ||--o{ TRANSACAO : envia
-    ALUNO ||--o{ TRANSACAO : recebe
-    
-    INSTITUICAO ||--o{ PROFESSOR : possui
-    INSTITUICAO ||--o{ ALUNO : possui
+    Aluno }o--|| Instituicao : "vínculo"
+    Professor }o--|| Instituicao : "vínculo"
 ```
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Stack Tecnológica
 
-- **Backend**: Java 17+, Spring Boot 3.x
-- **Persistência**: PostgreSQL / Hibernate
-- **Segurança**: Spring Security & JWT
-- **E-mail**: Spring Mail (SMTP/SendGrid)
-- **Documentação**: Swagger (OpenAPI)
-- **Frontend**: React.js / Vite (Proposta)
+### 🖥️ Backend
+- **JDK 21**: Aproveitando as últimas melhorias de performance da JVM.
+- **Spring Boot 3.2.5**: Core do sistema.
+- **Hibernate / JPA**: Mapeamento objeto-relacional.
+- **MySQL**: Banco de dados relacional robusto.
+- **Spring Mail**: Integração para envio de cupons e notificações.
+- **Lombok**: Redução de código boilerplate.
+
+### 📱 Frontend
+- **React 18**: Biblioteca principal.
+- **Vite**: Build tool ultra-rápido.
+- **Tailwind CSS**: Estilização baseada em utilitários.
+- **Radix UI**: Primitivas de interface acessíveis.
+- **Lucide Icons**: Pacote de ícones moderno.
+- **Motion**: Animações de interface.
+
+---
+
+## 📖 Documentação da API (Principais Endpoints)
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/api/auth/login` | Realiza a autenticação e retorna o perfil do usuário |
+| `POST` | `/api/transacoes/enviar` | Professor envia moedas para um Aluno |
+| `POST` | `/api/transacoes/resgatar` | Aluno troca moedas por uma vantagem de Empresa |
+| `GET` | `/api/transacoes/aluno/{id}` | Extrato consolidado do aluno (recebimentos e resgates) |
+| `GET` | `/api/vantagens` | Catálogo completo de vantagens disponíveis |
+| `POST` | `/api/empresas` | Cadastro de nova empresa parceira |
+
+---
+
+## 🔒 Segurança e Regras de Negócio
+
+-   **Integridade de Saldo**: O sistema impede envios se o professor não tiver saldo ou se o valor for negativo.
+-   **Notificação Automática**: A cada transação, um e-mail é disparado para as partes envolvidas com os detalhes (nome do professor, valor, mensagem e código do cupom no caso de resgate).
+-   **Segurança de Perfil**: O login é validado por `role`, impedindo que usuários acessem painéis que não pertencem ao seu cargo.
 
 ---
 
 ## ⚙️ Como Executar
 
-1. **Pré-requisitos**: JDK 17, Maven e PostgreSQL instalados.
-2. **Configuração**: Ajuste as credenciais do banco em `src/main/resources/application.yml`.
-3. **Execução**:
-   ```bash
-   mvn spring-boot:run
-   ```
-4. **Acesso**: A API estará disponível em `http://localhost:8080`.
+### Pré-requisitos
+- Java 21 ou superior.
+- Node.js 18 ou superior.
+- MySQL Server rodando (porta 3306).
+
+### 1. Backend
+```bash
+cd codigo/back-end/WebSystem/WebSystem
+./mvnw spring-boot:run
+```
+> O servidor iniciará em `http://localhost:8080`
+
+### 2. Frontend
+```bash
+cd codigo/front-end
+npm install
+npm run dev
+```
+> O frontend estará disponível em `http://localhost:5173`
+
+---
+
+## 📂 Documentação e Modelagem
+
+Toda a modelagem técnica do sistema pode ser encontrada na pasta `/modelagem`, organizada da seguinte forma:
+
+-   **Diagrama Entidade-Relacionamento (ER)**: Localizado em `/modelagem/Diagrama ER/`. Define a estrutura do banco de dados e os vínculos entre tabelas.
+-   **Diagrama de Casos de Uso**: Localizado em `/modelagem/caso de uso/`. Ilustra as funcionalidades do sistema sob a perspectiva dos atores (Aluno, Professor, Empresa).
+-   **Diagrama de Classes**: Localizado em `/modelagem/diagrama de classes/`. Apresenta a estrutura das classes Java, atributos e métodos principais.
+-   **Diagrama de Componentes**: Localizado em `/modelagem/diagrama de componentes/`. Descreve a organização física do sistema e suas dependências.
+-   **Histórias de Usuário**: Localizado em `/modelagem/historias de usuario/`. Documentação dos requisitos funcionais em formato de user stories.
+
+---
+
+## 👥 Autores
+- **Davi Nunes Carvalho**
+- **Joao Victor Russo Marquito**
+
+---
+*Projeto desenvolvido para a disciplina de Laboratório de Desenvolvimento de Software.*

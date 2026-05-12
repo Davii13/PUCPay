@@ -6,27 +6,30 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
-import { Benefit } from "../../data/mockData";
 import { Plus, Gift, Eye, Edit, Trash2, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
+import { useEffect } from "react";
+import { fetchApi } from "../../services/api";
 
 export function CompanyDashboard() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [benefits, setBenefits] = useState<Benefit[]>([
-    {
-      id: "1",
-      title: "50% de desconto em produtos",
-      description: "Válido para qualquer produto da loja durante o mês",
-      image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400",
-      cost: 200,
-      company: user?.companyName || "Sua Empresa",
-      category: "Desconto",
-      available: true,
-    },
-  ]);
+  const [benefits, setBenefits] = useState<any[]>([]);
+  const [redemptions, setRedemptions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchApi(`/vantagens/empresa/${user.id}`).then(setBenefits).catch(console.error);
+      
+      // Busca resgates (a empresa é a destinatária da transação de resgate)
+      fetchApi(`/transacoes/aluno/${user.id}`).then(data => {
+        const resgates = data.filter((t: any) => t.tipo === "RESGATE");
+        setRedemptions(resgates);
+      }).catch(console.error);
+    }
+  }, [user]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -36,44 +39,50 @@ export function CompanyDashboard() {
     category: "",
   });
 
-  const [redemptions] = useState([
-    { id: "1", benefit: "50% de desconto em produtos", student: "Maria Silva", date: new Date(2026, 3, 28) },
-    { id: "2", benefit: "50% de desconto em produtos", student: "Pedro Santos", date: new Date(2026, 3, 25) },
-  ]);
-
-  const handleCreateBenefit = () => {
+  const handleCreateBenefit = async () => {
     if (!formData.title || !formData.description || !formData.cost) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
-    const newBenefit: Benefit = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: formData.title,
-      description: formData.description,
-      image: formData.image || "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400",
-      cost: parseInt(formData.cost),
-      company: user?.companyName || "Sua Empresa",
-      category: formData.category || "Geral",
-      available: true,
-    };
+    try {
+      const payload = {
+        titulo: formData.title,
+        descricao: formData.description,
+        custo: parseInt(formData.cost),
+        fotoUrl: formData.image || "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400",
+        empresaId: user?.id
+      };
 
-    setBenefits([...benefits, newBenefit]);
-    toast.success("Vantagem cadastrada com sucesso!");
+      const newBenefit = await fetchApi("/vantagens", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
 
-    setFormData({
-      title: "",
-      description: "",
-      image: "",
-      cost: "",
-      category: "",
-    });
-    setOpen(false);
+      setBenefits([...benefits, newBenefit]);
+      toast.success("Vantagem cadastrada com sucesso!");
+
+      setFormData({
+        title: "",
+        description: "",
+        image: "",
+        cost: "",
+        category: "",
+      });
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao cadastrar vantagem");
+    }
   };
 
-  const handleDeleteBenefit = (id: string) => {
-    setBenefits(benefits.filter((b) => b.id !== id));
-    toast.success("Vantagem removida");
+  const handleDeleteBenefit = async (id: string) => {
+    try {
+      await fetchApi(`/vantagens/${id}`, { method: "DELETE" });
+      setBenefits(benefits.filter((b) => b.id.toString() !== id.toString()));
+      toast.success("Vantagem removida");
+    } catch (error: any) {
+      toast.error("Erro ao remover vantagem");
+    }
   };
 
   return (
@@ -278,26 +287,25 @@ export function CompanyDashboard() {
                       className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden"
                     >
                       <img
-                        src={benefit.image}
-                        alt={benefit.title}
+                        src={benefit.fotoUrl}
+                        alt={benefit.titulo}
                         className="w-full h-40 object-cover"
                       />
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-900 dark:text-white">
-                              {benefit.title}
+                              {benefit.titulo}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              {benefit.description}
+                              {benefit.descricao}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between mt-3">
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary">{benefit.category}</Badge>
                             <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400">
-                              {benefit.cost} moedas
+                              {benefit.custo} moedas
                             </Badge>
                           </div>
                           <Button
@@ -336,14 +344,14 @@ export function CompanyDashboard() {
                 >
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {redemption.benefit}
+                      {redemption.vantagem?.titulo || "Vantagem resgatada"}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Resgatado por {redemption.student}
+                      Resgatado por {redemption.remetente?.nome}
                     </p>
                   </div>
                   <p className="text-sm text-gray-500">
-                    {redemption.date.toLocaleDateString("pt-BR")}
+                    {new Date(redemption.dataHora).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
               ))}

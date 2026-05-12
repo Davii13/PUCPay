@@ -5,51 +5,69 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
-import { mockBenefits, Benefit } from "../data/mockData";
 import { Search, Filter, Store, Check, Coins } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { fetchApi } from "../services/api";
+import { useEffect } from "react";
 
 export function Marketplace() {
-  const { user } = useAuth();
+  const { user, updateLocalBalance } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedBenefit, setSelectedBenefit] = useState<Benefit | null>(null);
+  const [benefits, setBenefits] = useState<any[]>([]);
+  const [selectedBenefit, setSelectedBenefit] = useState<any>(null);
   const [showRedeemDialog, setShowRedeemDialog] = useState(false);
 
-  const categories = Array.from(new Set(mockBenefits.map((b) => b.category)));
+  useEffect(() => {
+    fetchApi("/vantagens").then(setBenefits).catch(console.error);
+  }, []);
 
-  const filteredBenefits = mockBenefits.filter((benefit) => {
+  const filteredBenefits = benefits.filter((benefit) => {
     const matchesSearch =
-      benefit.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      benefit.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      benefit.company.toLowerCase().includes(searchTerm.toLowerCase());
+      benefit.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      benefit.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      benefit.empresa?.nome.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = selectedCategory
-      ? benefit.category === selectedCategory
-      : true;
-
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
-  const handleRedeem = () => {
+  const handleRedeem = async () => {
     if (!selectedBenefit) return;
 
-    if ((user?.balance || 0) < selectedBenefit.cost) {
+    if ((user?.balance || 0) < selectedBenefit.custo) {
       toast.error("Saldo insuficiente para este resgate");
       return;
     }
 
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
+    try {
+      await fetchApi("/transacoes/resgatar", {
+        method: "POST",
+        body: JSON.stringify({
+          alunoId: user?.id,
+          vantagemId: selectedBenefit.id
+        })
+      });
 
-    toast.success(`Vantagem resgatada com sucesso! 🎉`);
-    setShowRedeemDialog(false);
-    setSelectedBenefit(null);
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+
+      toast.success(`Vantagem resgatada com sucesso! 🎉`);
+      
+      // Update local user balance context
+      if (updateLocalBalance) {
+        updateLocalBalance((user?.balance || 0) - selectedBenefit.custo);
+      }
+
+      setShowRedeemDialog(false);
+      setSelectedBenefit(null);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao resgatar vantagem");
+    }
   };
 
   return (
@@ -90,33 +108,6 @@ export function Marketplace() {
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            <Button
-              variant={selectedCategory === null ? "default" : "outline"}
-              onClick={() => setSelectedCategory(null)}
-              className={
-                selectedCategory === null
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : ""
-              }
-            >
-              Todas
-            </Button>
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
-                className={
-                  selectedCategory === category
-                    ? "bg-purple-600 hover:bg-purple-700"
-                    : ""
-                }
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
         </motion.div>
 
         <motion.div
@@ -131,7 +122,7 @@ export function Marketplace() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence mode="popLayout">
               {filteredBenefits.map((benefit, index) => {
-                const canAfford = (user?.balance || 0) >= benefit.cost;
+                const canAfford = (user?.balance || 0) >= benefit.custo;
 
                 return (
                   <motion.div
@@ -145,37 +136,32 @@ export function Marketplace() {
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
                       <div className="relative overflow-hidden">
                         <img
-                          src={benefit.image}
-                          alt={benefit.title}
+                          src={benefit.fotoUrl || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=200&auto=format&fit=crop"}
+                          alt={benefit.titulo}
                           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
                         />
-                        <div className="absolute top-3 right-3">
-                          <Badge className="bg-white/90 dark:bg-gray-900/90 text-gray-900 dark:text-white backdrop-blur-sm">
-                            {benefit.category}
-                          </Badge>
-                        </div>
                       </div>
 
                       <CardContent className="p-4 space-y-3">
                         <div>
                           <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-1">
-                            {benefit.title}
+                            {benefit.titulo}
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                            {benefit.description}
+                            {benefit.descricao}
                           </p>
                         </div>
 
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                           <Store className="w-4 h-4" />
-                          {benefit.company}
+                          {benefit.empresa?.nome}
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
                           <div className="flex items-center gap-2">
                             <Coins className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                             <span className="font-bold text-lg text-gray-900 dark:text-white">
-                              {benefit.cost}
+                              {benefit.custo}
                             </span>
                             <span className="text-sm text-gray-600 dark:text-gray-400">
                               moedas
@@ -236,17 +222,17 @@ export function Marketplace() {
           {selectedBenefit && (
             <div className="space-y-4">
               <img
-                src={selectedBenefit.image}
-                alt={selectedBenefit.title}
+                src={selectedBenefit.fotoUrl || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=200&auto=format&fit=crop"}
+                alt={selectedBenefit.titulo}
                 className="w-full h-48 object-cover rounded-lg"
               />
 
               <div>
                 <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-1">
-                  {selectedBenefit.title}
+                  {selectedBenefit.titulo}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedBenefit.description}
+                  {selectedBenefit.descricao}
                 </p>
               </div>
 
@@ -257,7 +243,7 @@ export function Marketplace() {
                 <div className="flex items-center gap-2">
                   <Coins className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                   <span className="font-bold text-lg text-gray-900 dark:text-white">
-                    {selectedBenefit.cost} moedas
+                    {selectedBenefit.custo} moedas
                   </span>
                 </div>
               </div>
@@ -267,7 +253,7 @@ export function Marketplace() {
                   Saldo após resgate
                 </span>
                 <span className="font-bold text-lg text-gray-900 dark:text-white">
-                  {(user?.balance || 0) - selectedBenefit.cost} moedas
+                  {(user?.balance || 0) - selectedBenefit.custo} moedas
                 </span>
               </div>
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { fetchApi } from "../services/api";
 
-export type UserRole = "student" | "professor" | "company";
+export type UserRole = "student" | "professor" | "company" | "admin";
 
 export interface User {
   id?: string;
@@ -31,6 +32,7 @@ interface AuthContextType {
   logout: () => void;
   register: (data: RegisterData) => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  updateLocalBalance: (newBalance: number) => void;
 }
 
 export interface RegisterData {
@@ -39,6 +41,7 @@ export interface RegisterData {
   password: string;
   role: UserRole;
   institution?: string;
+  instituicaoId?: number;
   course?: string;
   department?: string;
   companyName?: string;
@@ -49,8 +52,6 @@ export interface RegisterData {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_URL = "http://localhost:8080/api";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -64,35 +65,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string, role: UserRole) => {
     try {
-      const endpoint = role === "student" ? "/alunos" : role === "company" ? "/empresas" : "/professores";
+      const response = await fetchApi("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ login: email, senha: password }),
+      });
       
-      if (!endpoint) {
-        throw new Error("Credenciais inválidas");
+      const loggedUser: User = {
+        ...response,
+        id: response.id.toString(),
+        name: response.nome,
+        email: response.email,
+        login: response.login,
+        balance: response.saldo || 0,
+        role: response.role === "EMPRESA" ? "company" : 
+              response.role === "ALUNO" ? "student" : 
+              response.role === "PROFESSOR" ? "professor" : 
+              response.role.toLowerCase() as UserRole,
+        course: response.curso,
+        department: response.departamento,
+        cnpj: response.cnpj,
+        institution: response.instituicaoNome,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.nome}`,
+      };
+
+      if (loggedUser.role !== role) {
+        throw new Error("Perfil incorreto selecionado");
       }
 
-      const response = await fetch(`${API_URL}${endpoint}`);
-      if (!response.ok) throw new Error("Erro na comunicação com o servidor");
-      
-      const users: User[] = await response.json();
-      const foundUser = users.find(u => u.email === email && u.senha === password);
-
-      if (foundUser) {
-        const loggedUser: User = {
-          ...foundUser,
-          name: foundUser.nome || foundUser.name,
-          course: foundUser.curso || foundUser.course,
-          balance: foundUser.saldo || foundUser.balance || 0,
-          role: role,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${foundUser.nome}`,
-        };
-        setUser(loggedUser);
-        localStorage.setItem("pucpay_user", JSON.stringify(loggedUser));
-      } else {
-        throw new Error("Credenciais inválidas");
-      }
-    } catch (error) {
+      setUser(loggedUser);
+      localStorage.setItem("pucpay_user", JSON.stringify(loggedUser));
+    } catch (error: any) {
       console.error(error);
-      throw new Error("Falha no login ou credenciais incorretas.");
+      throw new Error(error.message || "Falha no login ou credenciais incorretas.");
     }
   };
 
@@ -102,116 +106,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: RegisterData) => {
-    let endpoint = "";
-    let payload: any = {
-      nome: data.name,
-      email: data.email,
-      login: data.email,
-      senha: data.password,
-    };
-
-    if (data.role === "student") {
-      endpoint = "/alunos";
-      payload = {
-        ...payload,
+    try {
+      const endpoint = data.role === "student" ? "/alunos" : data.role === "company" ? "/empresas" : "/professores";
+      
+      const payload: any = {
+        nome: data.name,
+        email: data.email,
+        senha: data.password,
         cpf: data.cpf,
         rg: data.rg,
         endereco: data.endereco,
-        curso: data.course || "Não informado",
-        saldo: 0.0
+        instituicaoId: data.instituicaoId
       };
-    } else if (data.role === "company") {
-      endpoint = "/empresas";
-      payload = {
-        ...payload,
-        cnpj: data.cnpj,
-      };
-    } else {
-      endpoint = "/professores";
-      payload = {
-        ...payload,
-        cpf: data.cpf,
-        departamento: data.department || "Não informado",
-        saldo: 5000.0
-      };
-    }
 
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao cadastrar usuário no sistema.");
+      if (data.role === "student") {
+        payload.curso = data.course;
+      } else if (data.role === "professor") {
+        payload.departamento = data.department;
+      } else if (data.role === "company") {
+        payload.cnpj = data.cnpj;
       }
 
-      const createdUser = await response.json();
-      const newUser: User = {
-        ...createdUser,
-        name: createdUser.nome,
-        course: createdUser.curso,
-        balance: createdUser.saldo || 0,
-        role: data.role,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${createdUser.nome}`,
-      };
-
-      setUser(newUser);
-      localStorage.setItem("pucpay_user", JSON.stringify(newUser));
-    } catch (error) {
+      await fetchApi(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      
+    } catch (error: any) {
       console.error(error);
-      throw new Error("Erro de comunicação com o servidor.");
+      throw new Error(error.message || "Erro ao realizar cadastro.");
     }
   };
 
   const updateProfile = async (data: Partial<User>) => {
-    if (!user || !user.id) return;
-    
-    let endpoint = "";
-    if (user.role === "student") endpoint = `/alunos/${user.id}`;
-    else if (user.role === "company") endpoint = `/empresas/${user.id}`;
-    else endpoint = `/professores/${user.id}`;
-
-    const payload = {
-      ...user,
-      nome: data.name || user.name || user.nome,
-      email: data.email || user.email,
-      login: data.email || user.login || user.email,
-      cpf: data.cpf || user.cpf,
-      rg: data.rg || user.rg,
-      endereco: data.endereco || user.endereco,
-      curso: data.course || user.curso || user.course,
-      departamento: data.department || user.department,
-      cnpj: data.cnpj || user.cnpj,
-      senha: data.senha || user.senha || "123456" // Assuming it must be provided for update
-    };
+    if (!user) return;
 
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const endpoint = user.role === "student" ? `/alunos/${user.id}` : user.role === "company" ? `/empresas/${user.id}` : `/professores/${user.id}`;
+      const payload = { ...user, ...data };
+      
+      const response = await fetchApi(endpoint, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        throw new Error("Erro ao atualizar perfil no servidor.");
-      }
-
-      const updatedData = await response.json();
-      const updatedUser: User = {
-        ...user,
-        ...updatedData,
-        name: updatedData.nome || updatedData.name,
-        course: updatedData.curso || updatedData.course,
-      };
-
+      
+      const updatedUser = { ...user, ...response, balance: response.saldo || user.balance };
       setUser(updatedUser);
       localStorage.setItem("pucpay_user", JSON.stringify(updatedUser));
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      throw new Error("Falha na atualização do perfil.");
+      throw new Error("Erro ao atualizar perfil.");
     }
+  };
+
+  const updateLocalBalance = (newBalance: number) => {
+    if (!user) return;
+    const updatedUser = { ...user, balance: newBalance, saldo: newBalance };
+    setUser(updatedUser);
+    localStorage.setItem("pucpay_user", JSON.stringify(updatedUser));
   };
 
   return (
@@ -223,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         register,
         updateProfile,
+        updateLocalBalance,
       }}
     >
       {children}

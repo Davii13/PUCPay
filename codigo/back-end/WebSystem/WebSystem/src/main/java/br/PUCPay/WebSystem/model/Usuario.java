@@ -13,6 +13,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public abstract class Usuario {
 
+    public enum Role {
+        ALUNO, PROFESSOR, EMPRESA, ADMIN
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,4 +32,8 @@ public abstract class Usuario {
 
     @Column(nullable = false)
     private String senha;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 }

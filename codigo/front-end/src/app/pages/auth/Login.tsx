@@ -25,7 +25,7 @@ export function Login() {
     try {
       await login(email, password, role);
       toast.success("Login realizado com sucesso!");
-      navigate(role === "student" ? "/student" : role === "professor" ? "/professor" : "/company");
+      navigate(role === "student" ? "/student" : role === "professor" ? "/professor" : role === "admin" ? "/admin" : "/company");
     } catch (error) {
       toast.error("Credenciais inválidas. Tente novamente.");
     } finally {
@@ -78,18 +78,21 @@ export function Login() {
           </CardHeader>
           <CardContent>
             <Tabs value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="student" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsTrigger value="student" className="flex items-center gap-2 text-xs sm:text-sm px-2">
                   <GraduationCap className="w-4 h-4" />
                   Aluno
                 </TabsTrigger>
-                <TabsTrigger value="professor" className="flex items-center gap-2">
+                <TabsTrigger value="professor" className="flex items-center gap-2 text-xs sm:text-sm px-2">
                   <Coins className="w-4 h-4" />
                   Professor
                 </TabsTrigger>
-                <TabsTrigger value="company" className="flex items-center gap-2">
+                <TabsTrigger value="company" className="flex items-center gap-2 text-xs sm:text-sm px-2">
                   <Building2 className="w-4 h-4" />
                   Empresa
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="flex items-center gap-2 text-xs sm:text-sm px-2">
+                  Admin
                 </TabsTrigger>
               </TabsList>
 

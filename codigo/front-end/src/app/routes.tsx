@@ -10,6 +10,7 @@ import { Marketplace } from "./pages/Marketplace";
 import { Transactions } from "./pages/Transactions";
 import { Profile } from "./pages/Profile";
 import { NotFound } from "./pages/NotFound";
+import { AdminDashboard } from "./pages/admin/Dashboard";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "student", Component: StudentDashboard },
       { path: "professor", Component: ProfessorDashboard },
       { path: "company", Component: CompanyDashboard },
+      { path: "admin", Component: AdminDashboard },
       { path: "marketplace", Component: Marketplace },
       { path: "transactions", Component: Transactions },
       { path: "profile", Component: Profile },

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "professores")
@@ -12,7 +11,6 @@ import lombok.AllArgsConstructor;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@AllArgsConstructor
 public class Professor extends Usuario {
 
     @Column(nullable = false, unique = true)
@@ -21,5 +19,15 @@ public class Professor extends Usuario {
     @Column(nullable = false)
     private String departamento;
 
-    private Double saldo = 5000.0;
+    private Double saldo = 1000.0;
+
+    @ManyToOne
+    @JoinColumn(name = "instituicao_id")
+    private Instituicao instituicao;
+
+    public Professor(String nome, String email, String login, String senha, String cpf, String departamento, Instituicao instituicao) {
+        super();
+        setNome(nome); setEmail(email); setLogin(login); setSenha(senha); setRole(Role.PROFESSOR);
+        this.cpf = cpf; this.departamento = departamento; this.instituicao = instituicao; this.saldo = 1000.0;
+    }
 }
