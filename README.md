@@ -25,6 +25,16 @@ Uma Single Page Application (SPA) moderna focada em performance e UX:
 -   **Componentização**: Componentes agnósticos e reutilizáveis, garantindo consistência visual.
 
 ---
+## ✨ Interface Premium (Apple-inspired UX)
+
+Recentemente, o PUCPay passou por um **total overhaul visual**, elevando a experiência do usuário para um padrão de mercado premium:
+
+-   **Glassmorphism**: Uso extensivo de transparências, desfoque de fundo e bordas sutis para um visual limpo e moderno.
+*   **Animações Fluídas**: Implementação de `motion/react` para transições de página, feedback de hover e micro-interações que tornam a interface viva.
+-   **Dashboard Data-Driven**: Visualização de saldos e extratos através de gráficos dinâmicos (`recharts`) e cards de métricas de alto impacto.
+-   **Experiência Unificada**: Design consistente em todos os perfis (Aluno, Professor, Empresa), adaptando-se perfeitamente do Desktop ao Mobile.
+
+---
 ## 📂 Estrutura de Pastas
 
 O projeto está organizado em uma estrutura modular para separar claramente as responsabilidades de interface, lógica de negócio e persistência.

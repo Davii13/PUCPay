@@ -9,7 +9,7 @@ export default function App() {
     <ThemeProvider attribute="class" defaultTheme="light">
       <AuthProvider>
         <RouterProvider router={router} />
-        <Toaster />
+        <Toaster position="top-right" richColors closeButton />
       </AuthProvider>
     </ThemeProvider>
   );

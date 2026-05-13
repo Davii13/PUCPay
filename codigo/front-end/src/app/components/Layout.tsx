@@ -20,10 +20,12 @@ export function Layout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-gray-950 transition-colors duration-500 overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto relative custom-scrollbar">
+        <div className="relative z-10">
+          <Outlet />
+        </div>
       </main>
       <MobileNav />
     </div>
