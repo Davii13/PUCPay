@@ -28,7 +28,8 @@ public class ProfessorController {
             Professor professor = new Professor();
             professor.setNome(payload.get("nome").toString());
             professor.setEmail(payload.get("email").toString());
-            professor.setLogin(payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
+            professor.setLogin(
+                    payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
             professor.setSenha(payload.get("senha").toString());
             professor.setRole(Usuario.Role.PROFESSOR);
             professor.setCpf(payload.getOrDefault("cpf", "").toString());
@@ -62,12 +63,17 @@ public class ProfessorController {
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
             Professor professor = professorService.findById(id);
-            if (professor == null) return ResponseEntity.notFound().build();
+            if (professor == null)
+                return ResponseEntity.notFound().build();
 
-            if (payload.containsKey("nome")) professor.setNome(payload.get("nome").toString());
-            if (payload.containsKey("email")) professor.setEmail(payload.get("email").toString());
-            if (payload.containsKey("departamento")) professor.setDepartamento(payload.get("departamento").toString());
-            if (payload.containsKey("cpf")) professor.setCpf(payload.get("cpf").toString());
+            if (payload.containsKey("nome"))
+                professor.setNome(payload.get("nome").toString());
+            if (payload.containsKey("email"))
+                professor.setEmail(payload.get("email").toString());
+            if (payload.containsKey("departamento"))
+                professor.setDepartamento(payload.get("departamento").toString());
+            if (payload.containsKey("cpf"))
+                professor.setCpf(payload.get("cpf").toString());
 
             return ResponseEntity.ok(professorService.update(professor));
         } catch (Exception e) {

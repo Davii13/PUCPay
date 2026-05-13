@@ -6,5 +6,6 @@ import java.util.Optional;
 
 public interface UsuarioDAO extends GenericDAO<Usuario> {
     Optional<Usuario> findByLogin(String login);
+
     Optional<Usuario> findByEmail(String email);
 }
