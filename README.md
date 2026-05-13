@@ -165,8 +165,10 @@ Toda a modelagem técnica do sistema pode ser encontrada na pasta `/modelagem`, 
 ---
 
 ## 👥 Autores
-- **Davi Nunes Carvalho**
-- **Joao Victor Russo Marquito**
+| 👤 Nome | 🖼️ Foto | :octocat: GitHub | 💼 LinkedIn | 📧 E-mail |
+|---------|----------|-----------------|-------------|-----------|
+| Davi Nunes Carvalho | <div align="center"><img src="https://github.com/Davii13.png" width="70px" height="70px" style="border-radius:50%;"></div> | <div align="center"><a href="https://github.com/Davii13"><img src="https://img.shields.io/badge/GitHub-Davii13-black?logo=github" /></a></div> | <div align="center"><a href="#"><img src="https://img.shields.io/badge/LinkedIn-blue?logo=linkedin" /></a></div> | <div align="center"><a href="mailto:seuemail@gmail.com">davinunescarvalho35@gmail.com</a></div> |
+| João Victor Russo Marquito | <div align="center"><img src="https://github.com/joaovictorz10.png" width="70px" height="70px" style="border-radius:50%;"></div> | <div align="center"><a href="https://github.com/joaovictorz10"><img src="https://img.shields.io/badge/GitHub-joaovictorz10-black?logo=github" /></a></div> | <div align="center"><a href="#"><img src="https://img.shields.io/badge/LinkedIn-blue?logo=linkedin" /></a></div> | <div align="center"><a href="mailto:seuemail@gmail.com">devjoaovictor9@gmail.com</a></div> |
 
 ---
 *Projeto desenvolvido para a disciplina de Laboratório de Desenvolvimento de Software.*
