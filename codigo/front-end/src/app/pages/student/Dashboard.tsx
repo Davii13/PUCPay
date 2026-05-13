@@ -51,7 +51,7 @@ export function StudentDashboard() {
         >
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Olá, {user?.name?.split(" ")[0]} 👋
+              Olá, {(user?.name || user?.nome)?.split(" ")[0]} 👋
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Bem-vindo de volta ao PUCPAY

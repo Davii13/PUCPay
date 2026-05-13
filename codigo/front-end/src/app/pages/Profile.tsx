@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -25,6 +25,24 @@ export function Profile() {
     endereco: user?.endereco || "",
     cnpj: user?.cnpj || "",
   });
+
+  // Sincronizar dados do formulário quando o usuário no contexto mudar
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || user.nome || "",
+        email: user.email || "",
+        institution: user.institution || "",
+        course: user.course || user.curso || "",
+        department: user.department || "",
+        companyName: user.companyName || "",
+        cpf: user.cpf || "",
+        rg: user.rg || "",
+        endereco: user.endereco || "",
+        cnpj: user.cnpj || "",
+      });
+    }
+  }, [user]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -119,7 +137,7 @@ export function Profile() {
                   <Avatar className="w-24 h-24">
                     <AvatarImage src={user?.avatar} />
                     <AvatarFallback className="text-2xl">
-                      {user?.name?.charAt(0)}
+                      {(user?.name || user?.nome)?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <Button
@@ -132,7 +150,7 @@ export function Profile() {
 
                 <div>
                   <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-                    {user?.name}
+                    {user?.name || user?.nome}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">{user?.email}</p>
                   <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 text-sm font-medium">

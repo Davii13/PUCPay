@@ -62,6 +62,40 @@ Localizado em `codigo/front-end/src/`
 ```
 
 ---
+
+### 🏛️ Back-end (Java Spring Boot)
+Localizado em `codigo/back-end/WebSystem/WebSystem/src/main/java/br/PUCPay/WebSystem/`
+
+```text
+├── 📂 controller      # Endpoints REST e controle de requisições HTTP
+├── 📂 service         # Regras de negócio e lógica central do sistema
+├── 📂 dao             # Padrão Data Access Object para isolar a persistência
+│   └── 📂 impl        # Implementações concretas dos DAOs (JPA/EntityManager)
+├── 📂 model           # Entidades JPA (Mapeamento do Banco de Dados)
+├── 📂 dto             # Objetos de Transferência de Dados (Payloads da API)
+├── 📂 config          # Configurações do Spring (CORS, Beans, Inits)
+└── 📂 exception       # Tratamento customizado de erros e exceções
+```
+
+### 🎨 Front-end (React + Vite)
+Localizado em `codigo/front-end/src/`
+
+```text
+├── 📂 app
+│   ├── 📂 pages       # Páginas principais da aplicação (Dashboard, Profile, etc)
+│   │   ├── 📂 auth    # Fluxos de Login e Cadastro (Split Layout)
+│   │   ├── 📂 student # Funcionalidades exclusivas do Aluno
+│   │   ├── 📂 professor # Funcionalidades exclusivas do Professor
+│   │   └── 📂 company # Funcionalidades exclusivas da Empresa
+│   ├── 📂 components  # Componentes reutilizáveis e UI (Shadcn/UI)
+│   ├── 📂 context     # Gerenciamento de estado global (Autenticação)
+│   ├── 📂 services    # Configuração do Axios/Fetch para chamadas à API
+│   └── 📄 routes.tsx  # Definição de rotas e proteção de acesso
+├── 📂 styles          # Configurações globais de CSS e Tailwind
+└── 📂 assets          # Imagens, logotipos e recursos estáticos
+```
+
+---
 ## 📊 Modelagem de Dados (ERD)
 
 ```mermaid

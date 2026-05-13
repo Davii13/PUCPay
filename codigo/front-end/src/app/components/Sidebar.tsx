@@ -109,11 +109,11 @@ export function Sidebar() {
         <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
           <Avatar className="w-12 h-12">
             <AvatarImage src={user?.avatar} />
-            <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{(user?.name || user?.nome)?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {user?.name}
+              {user?.name || user?.nome}
             </p>
             <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
               {getRoleIcon()}

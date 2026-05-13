@@ -143,14 +143,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const endpoint = user.role === "student" ? `/alunos/${user.id}` : user.role === "company" ? `/empresas/${user.id}` : `/professores/${user.id}`;
-      const payload = { ...user, ...data };
       
+      // Mapear campos para o formato do back-end
+      const payload: any = { ...data };
+      if (data.name) payload.nome = data.name;
+      if (user.role === "company" && data.companyName) payload.nome = data.companyName;
+
       const response = await fetchApi(endpoint, {
         method: "PUT",
         body: JSON.stringify(payload)
       });
       
-      const updatedUser = { ...user, ...response, balance: response.saldo || user.balance };
+      const updatedUser = { 
+        ...user, 
+        ...response, 
+        name: response.nome || user.name,
+        balance: response.saldo !== undefined ? response.saldo : user.balance 
+      };
       setUser(updatedUser);
       localStorage.setItem("pucpay_user", JSON.stringify(updatedUser));
     } catch (error: any) {

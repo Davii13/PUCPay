@@ -45,9 +45,19 @@ public class EmpresaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Empresa> update(@PathVariable Long id, @RequestBody Empresa empresa) {
-        empresa.setId(id);
-        return ResponseEntity.ok(empresaService.update(empresa));
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        try {
+            Empresa empresa = empresaService.findById(id);
+            if (empresa == null) return ResponseEntity.notFound().build();
+
+            if (payload.containsKey("nome")) empresa.setNome(payload.get("nome").toString());
+            if (payload.containsKey("email")) empresa.setEmail(payload.get("email").toString());
+            if (payload.containsKey("cnpj")) empresa.setCnpj(payload.get("cnpj").toString());
+
+            return ResponseEntity.ok(empresaService.update(empresa));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        }
     }
 
     @DeleteMapping("/{id}")

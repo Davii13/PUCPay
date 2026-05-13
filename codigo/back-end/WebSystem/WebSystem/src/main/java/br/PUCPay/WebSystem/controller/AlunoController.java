@@ -61,9 +61,22 @@ public class AlunoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Aluno> update(@PathVariable Long id, @RequestBody Aluno aluno) {
-        aluno.setId(id);
-        return ResponseEntity.ok(alunoService.update(aluno));
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        try {
+            Aluno aluno = alunoService.findById(id);
+            if (aluno == null) return ResponseEntity.notFound().build();
+
+            if (payload.containsKey("nome")) aluno.setNome(payload.get("nome").toString());
+            if (payload.containsKey("email")) aluno.setEmail(payload.get("email").toString());
+            if (payload.containsKey("curso")) aluno.setCurso(payload.get("curso").toString());
+            if (payload.containsKey("cpf")) aluno.setCpf(payload.get("cpf").toString());
+            if (payload.containsKey("rg")) aluno.setRg(payload.get("rg").toString());
+            if (payload.containsKey("endereco")) aluno.setEndereco(payload.get("endereco").toString());
+
+            return ResponseEntity.ok(alunoService.update(aluno));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        }
     }
 
     @DeleteMapping("/{id}")

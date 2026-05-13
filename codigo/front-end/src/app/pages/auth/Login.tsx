@@ -10,6 +10,8 @@ import { Coins, GraduationCap, Building2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 
+import backgroundImage from "../../../assets/puc.jpg";
+
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,6 +39,7 @@ export function Login() {
     student: { email: "student@puc.br", password: "demo123" },
     professor: { email: "professor@puc.br", password: "demo123" },
     company: { email: "empresa@parceiro.com", password: "demo123" },
+    admin: { email: "admin@puc.br", password: "admin" },
   };
 
   const fillDemo = () => {
@@ -45,128 +48,139 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-purple-950 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Coluna da Imagem */}
+      <div className="hidden lg:block relative overflow-hidden">
+        <img 
+          src={backgroundImage} 
+          alt="PUC Background" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/90 to-purple-900/20 flex flex-col justify-end p-12">
           <motion.div
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, type: "spring" }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
           >
-            <Coins className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6">
+              <Coins className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Bem-vindo ao PUCPAY
+            </h2>
+            <p className="text-purple-100 text-lg max-w-md">
+              A plataforma oficial de gestão de moedas estudantis da PUC. 
+              Reconhecendo o mérito e facilitando trocas acadêmicas.
+            </p>
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            PUCPAY
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Sistema de Moeda Estudantil
-          </p>
         </div>
+      </div>
 
-        <Card className="border-none shadow-xl">
-          <CardHeader>
-            <CardTitle>Entrar na plataforma</CardTitle>
-            <CardDescription>
-              Escolha seu perfil e faça login
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="student" className="flex items-center gap-2 text-xs sm:text-sm px-2">
-                  <GraduationCap className="w-4 h-4" />
-                  Aluno
-                </TabsTrigger>
-                <TabsTrigger value="professor" className="flex items-center gap-2 text-xs sm:text-sm px-2">
-                  <Coins className="w-4 h-4" />
-                  Professor
-                </TabsTrigger>
-                <TabsTrigger value="company" className="flex items-center gap-2 text-xs sm:text-sm px-2">
-                  <Building2 className="w-4 h-4" />
-                  Empresa
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="flex items-center gap-2 text-xs sm:text-sm px-2">
-                  Admin
-                </TabsTrigger>
-              </TabsList>
+      {/* Coluna do Formulário */}
+      <div className="flex items-center justify-center p-8 bg-white dark:bg-gray-950">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="lg:hidden text-center mb-8">
+             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-600 mb-4">
+              <Coins className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">PUCPAY</h1>
+          </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Entrar na conta
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Escolha seu perfil e acesse sua carteira
+            </p>
+          </div>
 
-                <div className="space-y-2">
+          <Tabs value={role} onValueChange={(v) => setRole(v as UserRole)}>
+            <TabsList className="grid w-full grid-cols-4 mb-8 p-1 bg-gray-100 dark:bg-gray-900">
+              <TabsTrigger value="student" className="text-xs">Aluno</TabsTrigger>
+              <TabsTrigger value="professor" className="text-xs">Professor</TabsTrigger>
+              <TabsTrigger value="company" className="text-xs">Empresa</TabsTrigger>
+              <TabsTrigger value="admin" className="text-xs">Admin</TabsTrigger>
+            </TabsList>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="exemplo@puc.br"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 border-gray-200 dark:border-gray-800 focus:ring-purple-500"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="p-0 h-auto"
-                    onClick={fillDemo}
-                  >
-                    Usar dados de demonstração
-                  </Button>
                   <Link
                     to="/auth/forgot-password"
-                    className="text-purple-600 hover:text-purple-700"
+                    className="text-sm text-purple-600 hover:text-purple-700 font-medium"
                   >
                     Esqueceu a senha?
                   </Link>
                 </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 border-gray-200 dark:border-gray-800 focus:ring-purple-500"
+                  required
+                />
+              </div>
 
+              <div className="flex items-center gap-2 pt-2">
                 <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800"
-                  disabled={loading}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={fillDemo}
+                  className="text-xs font-medium border-purple-100 text-purple-700 hover:bg-purple-50"
                 >
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Entrar
+                  💡 Usar dados de teste
                 </Button>
+              </div>
 
-                <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                  Não tem uma conta?{" "}
-                  <Link
-                    to="/auth/register"
-                    className="text-purple-600 hover:text-purple-700 font-medium"
-                  >
-                    Cadastre-se
-                  </Link>
-                </p>
-              </form>
-            </Tabs>
-          </CardContent>
-        </Card>
+              <Button
+                type="submit"
+                className="w-full h-12 text-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all active:scale-95"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Entrar agora"}
+              </Button>
 
-        <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
-          <p className="text-xs text-center text-gray-600 dark:text-gray-400">
-            💡 <span className="font-medium">Dica:</span> Use os dados de demonstração para explorar o sistema
-          </p>
-        </div>
-      </motion.div>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                Não tem uma conta?{" "}
+                <Link
+                  to="/auth/register"
+                  className="text-purple-600 hover:text-purple-700 font-bold"
+                >
+                  Cadastre-se grátis
+                </Link>
+              </p>
+            </form>
+          </Tabs>
+
+          <div className="mt-12 text-center">
+            <p className="text-xs text-gray-400">
+              © 2026 PUCPAY. Todos os direitos reservados.
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
