@@ -6,7 +6,10 @@ import br.PUCPay.WebSystem.dao.TransacaoDAO;
 import br.PUCPay.WebSystem.dao.VantagemDAO;
 import br.PUCPay.WebSystem.dto.EnviarMoedasDTO;
 import br.PUCPay.WebSystem.dto.ResgateDTO;
+import br.PUCPay.WebSystem.dto.ResgateNotificationMessage;
+import br.PUCPay.WebSystem.config.RabbitMQConfig;
 import br.PUCPay.WebSystem.model.*;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,9 @@ public class TransacaoService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Transactional
     public Transacao enviarMoedas(EnviarMoedasDTO dto) {
@@ -102,14 +108,15 @@ public class TransacaoService {
 
         Transacao salva = transacaoDAO.save(transacao);
 
-        emailService.enviarCupomAluno(
-                aluno.getEmail(), aluno.getNome(),
-                vantagem.getTitulo(), vantagem.getEmpresa().getNome(), codigo
+        ResgateNotificationMessage notification = new ResgateNotificationMessage(
+                aluno.getEmail(),
+                aluno.getNome(),
+                vantagem.getTitulo(),
+                vantagem.getEmpresa().getEmail(),
+                vantagem.getEmpresa().getNome(),
+                codigo
         );
-        emailService.enviarCupomEmpresa(
-                vantagem.getEmpresa().getEmail(), vantagem.getEmpresa().getNome(),
-                vantagem.getTitulo(), aluno.getNome(), codigo
-        );
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, notification);
 
         return salva;
     }
