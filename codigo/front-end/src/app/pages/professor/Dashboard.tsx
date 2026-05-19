@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { toast } from "sonner";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { fetchApi } from "../../services/api";
+import { sendStudentCoinsEmail } from "../../services/emailService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -99,6 +100,14 @@ export function ProfessorDashboard() {
         updateLocalBalance((user?.balance || 0) - parseFloat(amount));
       }
       
+      sendStudentCoinsEmail({
+        studentName: student.nome,
+        studentEmail: student.email,
+        professorName: user?.name || user?.nome || "Professor",
+        amount: parseFloat(amount),
+        message: message
+      }).catch(console.error);
+
       toast.success(`Premiação de ${amount} moedas enviada para ${student.nome}! ✨`);
 
       setSelectedStudent("");

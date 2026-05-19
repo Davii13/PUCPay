@@ -11,6 +11,7 @@ import { motion } from "motion/react";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { toast } from "sonner";
 import { fetchApi } from "../../services/api";
+import { sendProfessorCoinsEmail } from "../../services/emailService";
 
 export function AdminDashboard() {
   const { user } = useAuth();
@@ -42,6 +43,12 @@ export function AdminDashboard() {
           valor: parseFloat(amount)
         })
       });
+
+      sendProfessorCoinsEmail({
+        professorName: professor.nome,
+        professorEmail: professor.email,
+        amount: parseFloat(amount)
+      }).catch(console.error);
 
       toast.success(`${amount} moedas creditadas para o professor ${professor.nome}!`);
 

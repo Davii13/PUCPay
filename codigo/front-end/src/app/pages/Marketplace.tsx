@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { fetchApi } from "../services/api";
+import { sendBenefitPurchaseEmail } from "../services/emailService";
 
 const CATEGORIES = [
   { id: "all", label: "Todos", icon: ShoppingBag },
@@ -70,13 +71,25 @@ export function Marketplace() {
 
     setIsRedeeming(true);
     try {
-      await fetchApi("/transacoes/resgatar", {
+      const res = await fetchApi("/transacoes/resgatar", {
         method: "POST",
         body: JSON.stringify({
           alunoId: user?.id,
           vantagemId: selectedBenefit.id
         })
       });
+
+      if (selectedBenefit.empresa) {
+        sendBenefitPurchaseEmail({
+          companyName: selectedBenefit.empresa.nome,
+          companyEmail: selectedBenefit.empresa.email,
+          studentName: user?.name || user?.nome || "Estudante",
+          studentEmail: user?.email || "",
+          benefitTitle: selectedBenefit.titulo,
+          cost: selectedBenefit.custo,
+          couponCode: res?.codigoCupom,
+        }).catch(console.error);
+      }
 
       confetti({
         particleCount: 150,
