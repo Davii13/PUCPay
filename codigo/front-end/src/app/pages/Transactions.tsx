@@ -30,6 +30,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, startOfWeek } from 
 import { ptBR } from "date-fns/locale";
 import { fetchApi } from "../services/api";
 import { toast } from "sonner";
+import QRCode from "react-qr-code";
 
 export function Transactions() {
   const { user } = useAuth();
@@ -358,7 +359,7 @@ export function Transactions() {
                                   </div>
 
                                   {tx.codigoCupom && (
-                                    <div className="mt-4 p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/10 flex items-center justify-between border border-purple-100 dark:border-purple-900/20">
+                                    <div className="mt-4 p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/10 flex flex-col sm:flex-row sm:items-center justify-between border border-purple-100 dark:border-purple-900/20 gap-4">
                                       <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
                                           <Tag className="w-4 h-4 text-purple-600" />
@@ -368,15 +369,20 @@ export function Transactions() {
                                           <p className="font-mono font-black text-purple-700 dark:text-purple-400 text-lg">{tx.codigoCupom}</p>
                                         </div>
                                       </div>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="rounded-xl hover:bg-white text-purple-600"
-                                        onClick={() => copyCoupon(tx.codigoCupom)}
-                                      >
-                                        <Copy className="w-4 h-4 mr-2" />
-                                        Copiar
-                                      </Button>
+                                      <div className="flex items-center gap-4">
+                                        <div className="bg-white p-2 rounded-xl shadow-sm border border-purple-100 shrink-0">
+                                          <QRCode value={tx.codigoCupom} size={64} />
+                                        </div>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="rounded-xl hover:bg-white text-purple-600"
+                                          onClick={() => copyCoupon(tx.codigoCupom)}
+                                        >
+                                          <Copy className="w-4 h-4 mr-2" />
+                                          Copiar
+                                        </Button>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
