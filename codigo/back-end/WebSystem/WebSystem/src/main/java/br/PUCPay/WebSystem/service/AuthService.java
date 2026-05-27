@@ -38,6 +38,10 @@ public class AuthService {
             response.setRg(aluno.getRg());
             response.setEndereco(aluno.getEndereco());
             response.setCurso(aluno.getCurso());
+            response.setXpTotal(aluno.getXpTotal());
+            response.setNivel(aluno.getNivel());
+            response.setTotalResgates(aluno.getTotalResgates());
+            response.setTotalMoedasRecebidas(aluno.getTotalMoedasRecebidas());
             if (aluno.getInstituicao() != null) {
                 response.setInstituicaoId(aluno.getInstituicao().getId());
                 response.setInstituicaoNome(aluno.getInstituicao().getNome());

@@ -24,6 +24,10 @@ export interface User {
   rg?: string;
   endereco?: string;
   cnpj?: string;
+  xpTotal?: number;
+  nivel?: number;
+  totalResgates?: number;
+  totalMoedasRecebidas?: number;
 }
 
 interface AuthContextType {
@@ -80,14 +84,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         telefone: response.telefone,
         login: response.login,
         balance: response.saldo || 0,
-        role: response.role === "EMPRESA" ? "company" : 
-              response.role === "ALUNO" ? "student" : 
-              response.role === "PROFESSOR" ? "professor" : 
+        role: response.role === "EMPRESA" ? "company" :
+              response.role === "ALUNO" ? "student" :
+              response.role === "PROFESSOR" ? "professor" :
               response.role.toLowerCase() as UserRole,
         course: response.curso,
         department: response.departamento,
         cnpj: response.cnpj,
         institution: response.instituicaoNome,
+        xpTotal: response.xpTotal || 0,
+        nivel: response.nivel || 1,
+        totalResgates: response.totalResgates || 0,
+        totalMoedasRecebidas: response.totalMoedasRecebidas || 0,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.nome}`,
       };
 

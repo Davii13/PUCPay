@@ -24,4 +24,10 @@ public class LoginResponseDTO {
     private String cnpj;
     private Long instituicaoId;
     private String instituicaoNome;
+
+    // Gamificação
+    private Integer xpTotal;
+    private Integer nivel;
+    private Integer totalResgates;
+    private Double totalMoedasRecebidas;
 }
