@@ -16,6 +16,7 @@ export function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    telefone: "",
     password: "",
     confirmPassword: "",
     institution: "",
@@ -51,6 +52,7 @@ export function Register() {
       await register({
         name: role === "company" ? formData.companyName : formData.name,
         email: formData.email,
+        telefone: formData.telefone,
         password: formData.password,
         role,
         institution: formData.institution,
@@ -157,6 +159,19 @@ export function Register() {
                   onChange={handleChange}
                   className="h-11 border-gray-200"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telefone">WhatsApp</Label>
+                <Input
+                  id="telefone"
+                  name="telefone"
+                  type="tel"
+                  placeholder="5531999999999"
+                  value={formData.telefone}
+                  onChange={handleChange}
+                  className="h-11 border-gray-200"
                 />
               </div>
 

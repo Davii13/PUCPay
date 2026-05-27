@@ -11,6 +11,7 @@ import { Transactions } from "./pages/Transactions";
 import { Profile } from "./pages/Profile";
 import { NotFound } from "./pages/NotFound";
 import { AdminDashboard } from "./pages/admin/Dashboard";
+import { ValidateCoupon } from "./pages/ValidateCoupon";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: "forgot-password", Component: ForgotPassword },
     ],
   },
+  { path: "/validar-cupom/:codigo", Component: ValidateCoupon },
   {
     path: "/",
     Component: Layout,

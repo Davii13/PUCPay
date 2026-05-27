@@ -37,6 +37,24 @@ public class TransacaoController {
         }
     }
 
+    @GetMapping("/cupom/{codigoCupom}")
+    public ResponseEntity<?> consultarCupom(@PathVariable String codigoCupom) {
+        try {
+            return ResponseEntity.ok(transacaoService.consultarCupom(codigoCupom));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        }
+    }
+
+    @PostMapping("/cupom/{codigoCupom}/validar")
+    public ResponseEntity<?> validarCupom(@PathVariable String codigoCupom) {
+        try {
+            return ResponseEntity.ok(transacaoService.validarCupom(codigoCupom));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        }
+    }
+
     @GetMapping("/aluno/{id}")
     public ResponseEntity<List<Transacao>> getExtratoAluno(@PathVariable Long id) {
         return ResponseEntity.ok(transacaoService.getExtratoAluno(id));

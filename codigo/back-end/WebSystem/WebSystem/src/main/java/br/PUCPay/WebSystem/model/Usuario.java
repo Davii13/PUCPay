@@ -30,6 +30,8 @@ public abstract class Usuario {
     @Column(nullable = false, unique = true)
     private String login;
 
+    private String telefone;
+
     @Column(nullable = false)
     private String senha;
 

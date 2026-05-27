@@ -13,8 +13,10 @@ public class ResgateNotificationMessage implements Serializable {
 
     private String alunoEmail;
     private String alunoNome;
+    private String alunoTelefone;
     private String vantagemTitulo;
     private String empresaEmail;
     private String empresaNome;
     private String codigoCupom;
+    private String cupomUrl;
 }

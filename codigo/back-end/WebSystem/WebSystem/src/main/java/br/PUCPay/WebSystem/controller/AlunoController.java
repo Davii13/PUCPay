@@ -29,6 +29,7 @@ public class AlunoController {
             aluno.setNome(payload.get("nome").toString());
             aluno.setEmail(payload.get("email").toString());
             aluno.setLogin(payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
+            aluno.setTelefone(payload.getOrDefault("telefone", "").toString());
             aluno.setSenha(payload.get("senha").toString());
             aluno.setRole(Usuario.Role.ALUNO);
             aluno.setCpf(payload.getOrDefault("cpf", "").toString());
@@ -68,6 +69,7 @@ public class AlunoController {
 
             if (payload.containsKey("nome")) aluno.setNome(payload.get("nome").toString());
             if (payload.containsKey("email")) aluno.setEmail(payload.get("email").toString());
+            if (payload.containsKey("telefone")) aluno.setTelefone(payload.get("telefone").toString());
             if (payload.containsKey("curso")) aluno.setCurso(payload.get("curso").toString());
             if (payload.containsKey("cpf")) aluno.setCpf(payload.get("cpf").toString());
             if (payload.containsKey("rg")) aluno.setRg(payload.get("rg").toString());

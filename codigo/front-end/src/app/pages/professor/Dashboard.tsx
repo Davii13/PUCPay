@@ -99,7 +99,7 @@ export function ProfessorDashboard() {
       if (updateLocalBalance) {
         updateLocalBalance((user?.balance || 0) - parseFloat(amount));
       }
-      
+
       sendStudentCoinsEmail({
         studentName: student.nome,
         studentEmail: student.email,
@@ -107,7 +107,7 @@ export function ProfessorDashboard() {
         amount: parseFloat(amount),
         message: message
       }).catch(console.error);
-
+      
       toast.success(`Premiação de ${amount} moedas enviada para ${student.nome}! ✨`);
 
       setSelectedStudent("");

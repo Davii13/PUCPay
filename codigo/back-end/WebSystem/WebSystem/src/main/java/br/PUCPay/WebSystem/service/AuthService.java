@@ -29,6 +29,7 @@ public class AuthService {
         response.setNome(usuario.getNome());
         response.setEmail(usuario.getEmail());
         response.setLogin(usuario.getLogin());
+        response.setTelefone(usuario.getTelefone());
         response.setRole(usuario.getRole());
 
         if (usuario instanceof Aluno aluno) {

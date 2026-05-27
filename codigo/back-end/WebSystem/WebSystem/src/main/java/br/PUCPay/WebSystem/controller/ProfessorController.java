@@ -30,6 +30,7 @@ public class ProfessorController {
             professor.setEmail(payload.get("email").toString());
             professor.setLogin(
                     payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
+            professor.setTelefone(payload.getOrDefault("telefone", "").toString());
             professor.setSenha(payload.get("senha").toString());
             professor.setRole(Usuario.Role.PROFESSOR);
             professor.setCpf(payload.getOrDefault("cpf", "").toString());
@@ -70,6 +71,8 @@ public class ProfessorController {
                 professor.setNome(payload.get("nome").toString());
             if (payload.containsKey("email"))
                 professor.setEmail(payload.get("email").toString());
+            if (payload.containsKey("telefone"))
+                professor.setTelefone(payload.get("telefone").toString());
             if (payload.containsKey("departamento"))
                 professor.setDepartamento(payload.get("departamento").toString());
             if (payload.containsKey("cpf"))

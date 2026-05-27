@@ -16,6 +16,8 @@ function isConfigured(): boolean {
  * Generic function to send email via EmailJS.
  */
 async function sendEmail(templateParams: Record<string, any>) {
+  console.log("[EmailJS] Enviando e-mail para:", templateParams.to_email, templateParams);
+
   if (!isConfigured()) {
     console.warn(
       `[EmailJS] Configuração incompleta. Preencha o arquivo .env com as chaves do EmailJS.\n` +
@@ -67,6 +69,7 @@ Equipe PUCPay`;
   await sendEmail({
     to_name: params.companyName,
     to_email: params.companyEmail,
+    reply_to: params.studentEmail,
     from_name: params.studentName,
     subject,
     message,
@@ -97,6 +100,7 @@ Equipe PUCPay`;
   await sendEmail({
     to_name: params.professorName,
     to_email: params.professorEmail,
+    reply_to: params.professorEmail,
     from_name: "Administrador",
     subject,
     message,
@@ -131,6 +135,7 @@ Equipe PUCPay`;
   await sendEmail({
     to_name: params.studentName,
     to_email: params.studentEmail,
+    reply_to: params.studentEmail,
     from_name: params.professorName,
     subject,
     message,

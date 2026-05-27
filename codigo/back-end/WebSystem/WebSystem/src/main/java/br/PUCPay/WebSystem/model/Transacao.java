@@ -17,6 +17,10 @@ public class Transacao {
         ENVIO, RESGATE
     }
 
+    public enum StatusCupom {
+        DISPONIVEL, USADO
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -48,8 +52,14 @@ public class Transacao {
 
     private String codigoCupom;
 
+    @Enumerated(EnumType.STRING)
+    private StatusCupom statusCupom;
+
+    private LocalDateTime dataValidacaoCupom;
+
     @PrePersist
     public void prePersist() {
         if (dataHora == null) dataHora = LocalDateTime.now();
+        if (tipo == Tipo.RESGATE && statusCupom == null) statusCupom = StatusCupom.DISPONIVEL;
     }
 }

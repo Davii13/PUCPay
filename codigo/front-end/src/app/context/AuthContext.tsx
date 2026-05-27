@@ -8,6 +8,7 @@ export interface User {
   name?: string;
   nome?: string;
   email: string;
+  telefone?: string;
   login?: string;
   senha?: string;
   role: UserRole;
@@ -38,6 +39,7 @@ interface AuthContextType {
 export interface RegisterData {
   name: string;
   email: string;
+  telefone?: string;
   password: string;
   role: UserRole;
   institution?: string;
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: response.id.toString(),
         name: response.nome,
         email: response.email,
+        telefone: response.telefone,
         login: response.login,
         balance: response.saldo || 0,
         role: response.role === "EMPRESA" ? "company" : 
@@ -112,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const payload: any = {
         nome: data.name,
         email: data.email,
+        telefone: data.telefone,
         senha: data.password,
         cpf: data.cpf,
         rg: data.rg,

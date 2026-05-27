@@ -13,6 +13,7 @@ public class LoginResponseDTO {
     private String nome;
     private String email;
     private String login;
+    private String telefone;
     private Usuario.Role role;
     private Double saldo;
     private String cpf;

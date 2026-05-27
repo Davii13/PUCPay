@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { 
   Receipt, 
   ArrowDownRight, 
@@ -23,7 +24,9 @@ import {
   Clock,
   Store,
   Tag,
-  Coins
+  Coins,
+  Maximize2,
+  QrCode
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { format, startOfMonth, endOfMonth, isWithinInterval, startOfWeek } from "date-fns";
@@ -38,6 +41,7 @@ export function Transactions() {
   const [filterPeriod, setFilterPeriod] = useState<"all" | "month" | "week">("all");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedCoupon, setExpandedCoupon] = useState<any>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -130,6 +134,11 @@ export function Transactions() {
   const copyCoupon = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success("Código do cupom copiado!");
+  };
+
+  const getCouponUrl = (code: string) => {
+    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    return `${baseUrl}/validar-cupom/${code}`;
   };
 
   const groupedTransactions = groupTransactionsByDate();
@@ -371,11 +380,20 @@ export function Transactions() {
                                       </div>
                                       <div className="flex items-center gap-4">
                                         <div className="bg-white p-2 rounded-xl shadow-sm border border-purple-100 shrink-0">
-                                          <QRCode value={tx.codigoCupom} size={64} />
+                                          <QRCode value={getCouponUrl(tx.codigoCupom)} size={64} />
                                         </div>
                                         <Button 
                                           variant="ghost" 
                                           size="sm" 
+                                          className="rounded-xl hover:bg-white text-purple-600"
+                                          onClick={() => setExpandedCoupon(tx)}
+                                        >
+                                          <Maximize2 className="w-4 h-4 mr-2" />
+                                          Ampliar
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
                                           className="rounded-xl hover:bg-white text-purple-600"
                                           onClick={() => copyCoupon(tx.codigoCupom)}
                                         >
@@ -409,6 +427,37 @@ export function Transactions() {
           </Card>
         </motion.div>
       </div>
+
+      <Dialog open={!!expandedCoupon} onOpenChange={(open) => !open && setExpandedCoupon(null)}>
+        <DialogContent className="sm:max-w-[460px] rounded-[2rem] border-none shadow-2xl">
+          {expandedCoupon && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-2xl font-black">
+                  <QrCode className="w-6 h-6 text-purple-600" />
+                  QR Code de resgate
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-5 py-4">
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                  <QRCode value={getCouponUrl(expandedCoupon.codigoCupom)} size={280} />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-400">Código</p>
+                  <p className="font-mono text-2xl font-black text-purple-700">{expandedCoupon.codigoCupom}</p>
+                  <p className="mt-2 text-sm text-gray-500 max-w-xs">
+                    Ao escanear, a empresa abre a validação do cupom para confirmar a entrega.
+                  </p>
+                </div>
+                <Button className="w-full rounded-xl bg-purple-600 hover:bg-purple-700" onClick={() => copyCoupon(expandedCoupon.codigoCupom)}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar código
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

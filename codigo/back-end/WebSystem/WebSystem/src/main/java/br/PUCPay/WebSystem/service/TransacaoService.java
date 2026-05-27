@@ -11,8 +11,10 @@ import br.PUCPay.WebSystem.config.RabbitMQConfig;
 import br.PUCPay.WebSystem.model.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +38,9 @@ public class TransacaoService {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Transactional
     public Transacao enviarMoedas(EnviarMoedasDTO dto) {
@@ -105,20 +110,45 @@ public class TransacaoService {
         transacao.setDestinatario(vantagem.getEmpresa());
         transacao.setVantagem(vantagem);
         transacao.setCodigoCupom(codigo);
+        transacao.setStatusCupom(Transacao.StatusCupom.DISPONIVEL);
 
         Transacao salva = transacaoDAO.save(transacao);
+        String cupomUrl = buildCupomUrl(codigo);
 
-        ResgateNotificationMessage notification = new ResgateNotificationMessage(
-                aluno.getEmail(),
-                aluno.getNome(),
-                vantagem.getTitulo(),
-                vantagem.getEmpresa().getEmail(),
-                vantagem.getEmpresa().getNome(),
-                codigo
-        );
+        ResgateNotificationMessage notification = new ResgateNotificationMessage();
+        notification.setAlunoEmail(aluno.getEmail());
+        notification.setAlunoNome(aluno.getNome());
+        notification.setAlunoTelefone(aluno.getTelefone());
+        notification.setVantagemTitulo(vantagem.getTitulo());
+        notification.setEmpresaEmail(vantagem.getEmpresa().getEmail());
+        notification.setEmpresaNome(vantagem.getEmpresa().getNome());
+        notification.setCodigoCupom(codigo);
+        notification.setCupomUrl(cupomUrl);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, notification);
 
         return salva;
+    }
+
+    public Transacao consultarCupom(String codigoCupom) {
+        return transacaoDAO.findByCodigoCupom(codigoCupom)
+                .orElseThrow(() -> new RuntimeException("Cupom não encontrado"));
+    }
+
+    @Transactional
+    public Transacao validarCupom(String codigoCupom) {
+        Transacao transacao = consultarCupom(codigoCupom);
+
+        if (transacao.getTipo() != Transacao.Tipo.RESGATE || transacao.getVantagem() == null) {
+            throw new RuntimeException("Cupom inválido para resgate de vantagem");
+        }
+
+        if (transacao.getStatusCupom() == Transacao.StatusCupom.USADO) {
+            throw new RuntimeException("Cupom já foi utilizado");
+        }
+
+        transacao.setStatusCupom(Transacao.StatusCupom.USADO);
+        transacao.setDataValidacaoCupom(LocalDateTime.now());
+        return transacaoDAO.update(transacao);
     }
 
     public List<Transacao> getExtratoAluno(Long alunoId) {
@@ -127,5 +157,9 @@ public class TransacaoService {
 
     public List<Transacao> getExtratoProfessor(Long professorId) {
         return transacaoDAO.findByRemetenteId(professorId);
+    }
+
+    private String buildCupomUrl(String codigo) {
+        return frontendUrl.replaceAll("/$", "") + "/validar-cupom/" + codigo;
     }
 }

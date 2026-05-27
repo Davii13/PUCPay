@@ -24,6 +24,7 @@ public class EmpresaController {
             empresa.setNome(payload.get("nome").toString());
             empresa.setEmail(payload.get("email").toString());
             empresa.setLogin(payload.get("login") != null ? payload.get("login").toString() : payload.get("email").toString());
+            empresa.setTelefone(payload.getOrDefault("telefone", "").toString());
             empresa.setSenha(payload.get("senha").toString());
             empresa.setRole(Usuario.Role.EMPRESA);
             empresa.setCnpj(payload.getOrDefault("cnpj", "").toString());
@@ -52,6 +53,7 @@ public class EmpresaController {
 
             if (payload.containsKey("nome")) empresa.setNome(payload.get("nome").toString());
             if (payload.containsKey("email")) empresa.setEmail(payload.get("email").toString());
+            if (payload.containsKey("telefone")) empresa.setTelefone(payload.get("telefone").toString());
             if (payload.containsKey("cnpj")) empresa.setCnpj(payload.get("cnpj").toString());
 
             return ResponseEntity.ok(empresaService.update(empresa));

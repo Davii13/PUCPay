@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   ChevronRight,
   Edit3,
-  X
+  X,
+  Phone
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ export function Profile() {
   const [formData, setFormData] = useState({
     name: user?.name || user?.nome || "",
     email: user?.email || "",
+    telefone: user?.telefone || "",
     institution: user?.institution || "",
     course: user?.course || user?.curso || "",
     department: user?.department || "",
@@ -47,6 +49,7 @@ export function Profile() {
       setFormData({
         name: user.name || user.nome || "",
         email: user.email || "",
+        telefone: user.telefone || "",
         institution: user.institution || "",
         course: user.course || user.curso || "",
         department: user.department || "",
@@ -227,6 +230,7 @@ export function Profile() {
                 <CardContent className="p-8 grid md:grid-cols-2 gap-6">
                   {renderField("Nome Completo", <User className="w-3 h-3" />, formData.name, "name")}
                   {renderField("E-mail", <Mail className="w-3 h-3" />, formData.email, "email")}
+                  {renderField("WhatsApp", <Phone className="w-3 h-3" />, formData.telefone, "telefone", "5531999999999")}
                   
                   {user?.role === "student" && (
                     <>
