@@ -1,0 +1,112 @@
+@startuml PUCPay_Autenticacao_Sequencia
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam backgroundColor #F8F8F8
+skinparam fontFamily "Roboto"
+
+title Diagrama de Sequência - PUCPay: Fluxo de Autenticação e Login
+
+actor Usuario as user
+participant "Frontend\n(React)" as frontend
+participant "AuthContext\n(Context API)" as context
+participant "API REST\n(Spring Boot)" as api
+participant "UsuarioDAO" as udao
+participant "Database\n(MySQL)" as db
+
+user -> frontend: 1. Acessa aplicação
+activate frontend
+
+frontend -> context: 2. Verifica AuthContext\n(sessão persistida?)
+activate context
+
+alt Sessão Válida Armazenada
+  context --> frontend: 3a. Usuário já autenticado
+  frontend --> user: ✅ Redireciona ao Dashboard
+  deactivate context
+  deactivate frontend
+else Sem Sessão (Primeira Vez)
+  context --> frontend: 3b. Sem sessão, redireciona ao Login
+  deactivate context
+
+  frontend --> user: 4. Exibe página de Login\n(Split Layout)
+
+  user -> frontend: 5. Insere login + senha
+  activate context
+  frontend -> context: 6. Inicia processo de autenticação
+
+  context -> api: 7. POST /api/auth/login\n{login, senha}
+  activate api
+
+  api -> udao: 8. buscarPorLogin(login)
+  activate udao
+
+  udao -> db: 9. SELECT u.* FROM Usuario u\nWHERE u.login = ?
+  activate db
+  db --> udao: Retorna usuário do banco
+  deactivate db
+
+  udao --> api: 10. Retorna usuário encontrado
+  deactivate udao
+
+  alt Usuário Não Encontrado
+    api --> context: 11a. {erro: 'Usuário não encontrado'}
+    context --> frontend: Erro de autenticação
+    frontend --> user: ❌ Mensagem de erro
+    deactivate api
+    deactivate context
+    deactivate frontend
+  else Usuário Encontrado
+    api -> api: 12b. Validar senha\n(bcrypt.matches())
+
+    alt Senha Inválida
+      api --> context: 13a. {erro: 'Senha incorreta'}
+      context --> frontend: Erro de autenticação
+      frontend --> user: ❌ Mensagem de erro
+      deactivate api
+      deactivate context
+      deactivate frontend
+    else Senha Válida
+      api -> api: 13b. Preparar response com\ndados do usuário
+
+      api -> udao: 14. buscarDetalhesUsuario(id)\n(Aluno/Professor/Empresa)
+      activate udao
+
+      udao -> db: 15. SELECT u.*, a.* FROM Usuario u\nLEFT JOIN Aluno a ON u.id = a.usuario_id\nWHERE u.id = ?
+      activate db
+      db --> udao: Retorna detalhes específicos do tipo
+      deactivate db
+
+      udao --> api: 16. Retorna usuário completo\ncom saldo, curso, etc
+      deactivate udao
+
+      api --> context: 17. {status: 200, usuarioId, nome,\nrole, saldo, email}
+      deactivate api
+
+      context -> context: 18. Armazenar sessão\n(localStorage/sessionStorage)
+      note over context
+        - token/usuarioId
+        - role do usuário
+        - dados do perfil
+        - saldo atual
+      end note
+
+      context --> frontend: 19. Usuário autenticado
+
+      frontend -> frontend: 20. Atualizar AuthContext\nglobalmente
+
+      frontend -> frontend: 21. Redirecionar ao Dashboard\napropiado:
+      note over frontend
+        - ALUNO → /student/dashboard
+        - PROFESSOR → /professor/dashboard
+        - EMPRESA → /company/dashboard
+        - ADMIN → /admin/dashboard
+      end note
+
+      frontend --> user: 22. ✅ Login bem-sucedido!\nRedireciona ao painel
+      deactivate context
+      deactivate frontend
+    end
+  end
+end
+
+@enduml
