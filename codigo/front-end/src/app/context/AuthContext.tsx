@@ -147,22 +147,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const endpoint = user.role === "student" ? `/alunos/${user.id}` : user.role === "company" ? `/empresas/${user.id}` : `/professores/${user.id}`;
-      
+
       // Mapear campos para o formato do back-end
       const payload: any = { ...data };
       if (data.name) payload.nome = data.name;
       if (user.role === "company" && data.companyName) payload.nome = data.companyName;
+      if (user.role === "professor" && data.department) payload.departamento = data.department;
+      if (user.role === "student" && data.course) payload.curso = data.course;
 
       const response = await fetchApi(endpoint, {
         method: "PUT",
         body: JSON.stringify(payload)
       });
-      
-      const updatedUser = { 
-        ...user, 
-        ...response, 
+
+      const updatedUser = {
+        ...user,
+        ...response,
         name: response.nome || user.name,
-        balance: response.saldo !== undefined ? response.saldo : user.balance 
+        balance: response.saldo !== undefined ? response.saldo : user.balance,
+        department: response.departamento || user.department,
+        course: response.curso || user.course
       };
       setUser(updatedUser);
       localStorage.setItem("pucpay_user", JSON.stringify(updatedUser));
