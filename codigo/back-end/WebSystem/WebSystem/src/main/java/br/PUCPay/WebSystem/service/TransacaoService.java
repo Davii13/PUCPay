@@ -47,6 +47,10 @@ public class TransacaoService {
 
     @Transactional
     public Transacao enviarMoedas(EnviarMoedasDTO dto) {
+        if (dto == null || dto.getValor() == null) {
+            throw new RuntimeException("Dados da transação inválidos");
+        }
+
         Professor professor = professorDAO.findById(dto.getProfessorId());
         if (professor == null) throw new RuntimeException("Professor não encontrado");
 
@@ -65,8 +69,11 @@ public class TransacaoService {
             throw new RuntimeException("Saldo insuficiente. Saldo atual: " + professor.getSaldo());
         }
 
-        professor.setSaldo(professor.getSaldo() - dto.getValor());
-        aluno.setSaldo(aluno.getSaldo() + dto.getValor());
+        Double newProfessorBalance = professor.getSaldo() - dto.getValor();
+        Double newAlunoBalance = aluno.getSaldo() + dto.getValor();
+
+        professor.setSaldo(newProfessorBalance);
+        aluno.setSaldo(newAlunoBalance);
 
         professorDAO.update(professor);
         alunoDAO.update(aluno);
@@ -80,18 +87,30 @@ public class TransacaoService {
 
         Transacao salva = transacaoDAO.save(transacao);
 
-        gamificacaoService.registrarRecebimentoMoedas(aluno.getId(), dto.getValor());
+        try {
+            gamificacaoService.registrarRecebimentoMoedas(aluno.getId(), dto.getValor());
+        } catch (Exception e) {
+            System.err.println("[GAMIFICACAO] Erro ao registrar recebimento de moedas: " + e.getMessage());
+        }
 
-        emailService.enviarNotificacaoMoedas(
-                aluno.getEmail(), aluno.getNome(),
-                professor.getNome(), dto.getValor(), dto.getMensagem()
-        );
+        try {
+            emailService.enviarNotificacaoMoedas(
+                    aluno.getEmail(), aluno.getNome(),
+                    professor.getNome(), dto.getValor(), dto.getMensagem()
+            );
+        } catch (Exception e) {
+            System.err.println("[EMAIL] Erro ao enviar notificação: " + e.getMessage());
+        }
 
         return salva;
     }
 
     @Transactional
     public Transacao resgatarVantagem(ResgateDTO dto) {
+        if (dto == null || dto.getAlunoId() == null || dto.getVantagemId() == null) {
+            throw new RuntimeException("Dados do resgate inválidos");
+        }
+
         Aluno aluno = alunoDAO.findById(dto.getAlunoId());
         if (aluno == null) throw new RuntimeException("Aluno não encontrado");
 
@@ -102,12 +121,17 @@ public class TransacaoService {
             throw new RuntimeException("Saldo insuficiente. Necessário: " + vantagem.getCusto() + " | Saldo: " + aluno.getSaldo());
         }
 
-        aluno.setSaldo(aluno.getSaldo() - vantagem.getCusto());
+        Double newBalance = aluno.getSaldo() - vantagem.getCusto();
+        aluno.setSaldo(newBalance);
         alunoDAO.update(aluno);
 
-        gamificacaoService.registrarResgate(aluno.getId(), vantagem.getCusto());
+        try {
+            gamificacaoService.registrarResgate(aluno.getId(), vantagem.getCusto());
+        } catch (Exception e) {
+            System.err.println("[GAMIFICACAO] Erro ao registrar resgate: " + e.getMessage());
+        }
 
-        String codigo = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String codigo = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
 
         Transacao transacao = new Transacao();
         transacao.setTipo(Transacao.Tipo.RESGATE);
@@ -122,16 +146,20 @@ public class TransacaoService {
         Transacao salva = transacaoDAO.save(transacao);
         String cupomUrl = buildCupomUrl(codigo);
 
-        ResgateNotificationMessage notification = new ResgateNotificationMessage();
-        notification.setAlunoEmail(aluno.getEmail());
-        notification.setAlunoNome(aluno.getNome());
-        notification.setAlunoTelefone(aluno.getTelefone());
-        notification.setVantagemTitulo(vantagem.getTitulo());
-        notification.setEmpresaEmail(vantagem.getEmpresa().getEmail());
-        notification.setEmpresaNome(vantagem.getEmpresa().getNome());
-        notification.setCodigoCupom(codigo);
-        notification.setCupomUrl(cupomUrl);
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, notification);
+        try {
+            ResgateNotificationMessage notification = new ResgateNotificationMessage();
+            notification.setAlunoEmail(aluno.getEmail());
+            notification.setAlunoNome(aluno.getNome());
+            notification.setAlunoTelefone(aluno.getTelefone());
+            notification.setVantagemTitulo(vantagem.getTitulo());
+            notification.setEmpresaEmail(vantagem.getEmpresa().getEmail());
+            notification.setEmpresaNome(vantagem.getEmpresa().getNome());
+            notification.setCodigoCupom(codigo);
+            notification.setCupomUrl(cupomUrl);
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, notification);
+        } catch (Exception e) {
+            System.err.println("[NOTIFICATION] Erro ao enviar notificação: " + e.getMessage());
+        }
 
         return salva;
     }

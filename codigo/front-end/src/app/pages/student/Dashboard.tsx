@@ -48,7 +48,10 @@ export function StudentDashboard() {
         
         setRecommendedBenefits(advantages.slice(0, 4));
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error("Erro ao carregar dashboard:", err);
+        toast.error("Erro ao carregar dados do dashboard");
+      })
       .finally(() => setLoading(false));
     }
   }, [user]);

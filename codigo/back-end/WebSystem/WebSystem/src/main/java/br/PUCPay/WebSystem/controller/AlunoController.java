@@ -25,6 +25,20 @@ public class AlunoController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> payload) {
         try {
+            if (payload == null || payload.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Payload vazio"));
+            }
+
+            if (!payload.containsKey("nome") || payload.get("nome") == null || payload.get("nome").toString().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Nome é obrigatório"));
+            }
+            if (!payload.containsKey("email") || payload.get("email") == null || payload.get("email").toString().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email é obrigatório"));
+            }
+            if (!payload.containsKey("senha") || payload.get("senha") == null || payload.get("senha").toString().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Senha é obrigatória"));
+            }
+
             Aluno aluno = new Aluno();
             aluno.setNome(payload.get("nome").toString());
             aluno.setEmail(payload.get("email").toString());
@@ -46,7 +60,7 @@ public class AlunoController {
 
             return ResponseEntity.ok(alunoService.save(aluno));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Erro ao criar aluno"));
         }
     }
 

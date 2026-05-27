@@ -88,7 +88,10 @@ export function Marketplace() {
           benefitTitle: selectedBenefit.titulo,
           cost: selectedBenefit.custo,
           couponCode: res?.codigoCupom,
-        }).catch(console.error);
+        }).catch((err) => {
+          console.error("Erro ao enviar email:", err);
+          toast.warning("Vantagem resgatada, mas erro ao notificar empresa");
+        });
       }
 
       confetti({

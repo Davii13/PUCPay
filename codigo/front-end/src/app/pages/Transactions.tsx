@@ -53,7 +53,10 @@ export function Transactions() {
       
       fetchApi(endpoint)
         .then(setTransactions)
-        .catch(console.error)
+        .catch((err) => {
+          console.error("Erro ao carregar transações:", err);
+          toast.error("Erro ao carregar transações");
+        })
         .finally(() => setLoading(false));
     }
   }, [user]);

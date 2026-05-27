@@ -20,14 +20,10 @@ public class GamificacaoController {
     @GetMapping("/aluno/{id}/badges")
     public ResponseEntity<List<Map<String, Object>>> getBadgesAluno(@PathVariable Long id) {
         try {
-            System.out.println("[GAMIFICACAO] Buscando badges para aluno: " + id);
             List<Map<String, Object>> badges = gamificacaoService.getAllBadgesComStatus(id);
-            System.out.println("[GAMIFICACAO] Badges encontrados: " + badges.size());
             return ResponseEntity.ok(badges);
         } catch (Exception e) {
-            System.err.println("[GAMIFICACAO] Erro ao buscar badges: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(List.of(Map.of("error", e.getMessage())));
         }
     }
 
@@ -71,9 +67,7 @@ public class GamificacaoController {
 
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
-            System.err.println("[GAMIFICACAO] Erro ao buscar leaderboard: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }

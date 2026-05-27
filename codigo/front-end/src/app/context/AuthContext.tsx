@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         body: JSON.stringify({ login: email, senha: password }),
       });
-      
+
       const loggedUser: User = {
         ...response,
         id: response.id.toString(),
@@ -105,6 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(loggedUser);
       localStorage.setItem("pucpay_user", JSON.stringify(loggedUser));
+
+      if (response.token) {
+        localStorage.setItem("authToken", response.token);
+      }
     } catch (error: any) {
       console.error(error);
       throw new Error(error.message || "Falha no login ou credenciais incorretas.");
@@ -114,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("pucpay_user");
+    localStorage.removeItem("authToken");
   };
 
   const register = async (data: RegisterData) => {
