@@ -18,10 +18,10 @@ public class GamificacaoController {
     private GamificacaoService gamificacaoService;
 
     @GetMapping("/aluno/{id}/badges")
-    public ResponseEntity<List<AlunoBadge>> getBadgesAluno(@PathVariable Long id) {
+    public ResponseEntity<List<Map<String, Object>>> getBadgesAluno(@PathVariable Long id) {
         try {
             System.out.println("[GAMIFICACAO] Buscando badges para aluno: " + id);
-            List<AlunoBadge> badges = gamificacaoService.getBadgesAluno(id);
+            List<Map<String, Object>> badges = gamificacaoService.getAllBadgesComStatus(id);
             System.out.println("[GAMIFICACAO] Badges encontrados: " + badges.size());
             return ResponseEntity.ok(badges);
         } catch (Exception e) {

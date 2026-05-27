@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -50,42 +51,35 @@ public class GamificacaoService {
 
     @Transactional
     private void verificarEAtribuirBadges(Aluno aluno) {
-        // Primeiro resgate
-        if (aluno.getTotalResgates() == 1) {
+        System.out.println("[GAMIFICACAO] Verificando badges para aluno " + aluno.getId() +
+                         " | Resgates: " + aluno.getTotalResgates() +
+                         " | Moedas: " + aluno.getTotalMoedasRecebidas() +
+                         " | XP: " + aluno.getXpTotal());
+
+        // Badges de resgate (progressivos)
+        if (aluno.getTotalResgates() >= 1) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.PRIMEIRO_RESGATE);
         }
-
-        // 5 resgates
-        if (aluno.getTotalResgates() == 5) {
+        if (aluno.getTotalResgates() >= 5) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.CINCO_RESGATES);
         }
-
-        // 10 resgates
-        if (aluno.getTotalResgates() == 10) {
+        if (aluno.getTotalResgates() >= 10) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.DEZ_RESGATES);
         }
-
-        // 25 resgates
-        if (aluno.getTotalResgates() == 25) {
+        if (aluno.getTotalResgates() >= 25) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.VINTE_CINCO_RESGATES);
         }
 
-        // 100 moedas
-        if (aluno.getTotalMoedasRecebidas() >= 100 && aluno.getTotalMoedasRecebidas() < 200) {
+        // Badges de moedas (progressivos)
+        if (aluno.getTotalMoedasRecebidas() >= 100) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.CEM_MOEDAS_RECEBIDAS);
         }
-
-        // 500 moedas
-        if (aluno.getTotalMoedasRecebidas() >= 500 && aluno.getTotalMoedasRecebidas() < 1000) {
+        if (aluno.getTotalMoedasRecebidas() >= 500) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.QUINHENTAS_MOEDAS_RECEBIDAS);
         }
-
-        // 1000 moedas
-        if (aluno.getTotalMoedasRecebidas() >= 1000 && aluno.getTotalMoedasRecebidas() < 5000) {
+        if (aluno.getTotalMoedasRecebidas() >= 1000) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.MIL_MOEDAS_RECEBIDAS);
         }
-
-        // 5000 moedas
         if (aluno.getTotalMoedasRecebidas() >= 5000) {
             atribuirBadgeSeNaoExistir(aluno, Badge.TipoBadge.FIVE_MIL_MOEDAS_RECEBIDAS);
         }
@@ -93,7 +87,10 @@ public class GamificacaoService {
 
     private void atribuirBadgeSeNaoExistir(Aluno aluno, Badge.TipoBadge tipoBadge) {
         Badge badge = badgeDAO.findByTipo(tipoBadge);
-        if (badge == null) return;
+        if (badge == null) {
+            System.err.println("[GAMIFICACAO] Badge tipo " + tipoBadge + " não encontrado!");
+            return;
+        }
 
         Optional<AlunoBadge> jaPossui = alunoBadgeDAO.findByAlunoIdAndBadgeId(aluno.getId(), badge.getId());
         if (jaPossui.isEmpty()) {
@@ -101,11 +98,46 @@ public class GamificacaoService {
             alunoBadge.setAluno(aluno);
             alunoBadge.setBadge(badge);
             alunoBadgeDAO.save(alunoBadge);
+            System.out.println("[GAMIFICACAO] Badge '" + badge.getNome() + "' atribuído ao aluno " + aluno.getId());
+        } else {
+            System.out.println("[GAMIFICACAO] Aluno " + aluno.getId() + " já possui badge '" + badge.getNome() + "'");
         }
     }
 
     public List<AlunoBadge> getBadgesAluno(Long alunoId) {
         return alunoBadgeDAO.findByAlunoId(alunoId);
+    }
+
+    public List<Map<String, Object>> getAllBadgesComStatus(Long alunoId) {
+        List<Badge> todosBadges = badgeDAO.findAll();
+        List<AlunoBadge> badgesDesbloqueados = alunoBadgeDAO.findByAlunoId(alunoId);
+
+        return todosBadges.stream().map(badge -> {
+            boolean desbloqueado = badgesDesbloqueados.stream()
+                .anyMatch(ab -> ab.getBadge().getId().equals(badge.getId()));
+
+            AlunoBadge alunoBadgeData = badgesDesbloqueados.stream()
+                .filter(ab -> ab.getBadge().getId().equals(badge.getId()))
+                .findFirst()
+                .orElse(null);
+
+            var resultado = Map.ofEntries(
+                Map.entry("id", (Object) badge.getId()),
+                Map.entry("nome", (Object) badge.getNome()),
+                Map.entry("descricao", (Object) badge.getDescricao()),
+                Map.entry("iconeUrl", (Object) badge.getIconeUrl()),
+                Map.entry("tipo", (Object) badge.getTipo().toString()),
+                Map.entry("xpRecompensa", (Object) badge.getXpRecompensa()),
+                Map.entry("desbloqueado", (Object) desbloqueado)
+            );
+
+            if (alunoBadgeData != null) {
+                var comData = new java.util.HashMap<String, Object>(resultado);
+                comData.put("dataConquista", alunoBadgeData.getDataConquista());
+                return comData;
+            }
+            return resultado;
+        }).toList();
     }
 
     public Aluno getProgressoAluno(Long alunoId) {

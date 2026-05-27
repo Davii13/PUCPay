@@ -9,15 +9,13 @@ import { toast } from "sonner";
 
 interface BadgeData {
   id: number;
-  badge: {
-    id: number;
-    nome: string;
-    descricao: string;
-    iconeUrl: string;
-    tipo: string;
-    xpRecompensa: number;
-  };
-  dataConquista: string;
+  nome: string;
+  descricao: string;
+  iconeUrl: string;
+  tipo: string;
+  xpRecompensa: number;
+  desbloqueado: boolean;
+  dataConquista?: string;
 }
 
 interface Progresso {
@@ -159,19 +157,15 @@ export function Conquistas() {
                 <Award className="w-5 h-5 text-purple-600" />
                 Seus Badges
               </CardTitle>
-              <CardDescription>Você desbloqueou {badges.length} badge(s)</CardDescription>
+              <CardDescription>
+                Você desbloqueou {badges.filter(b => b.desbloqueado).length} de {badges.length} badge(s)
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="p-8">
               {loading ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                </div>
-              ) : badges.length === 0 ? (
-                <div className="text-center py-12 space-y-4">
-                  <Lock className="w-16 h-16 mx-auto text-gray-300" />
-                  <p className="text-gray-500 font-medium">Nenhum badge desbloqueado ainda</p>
-                  <p className="text-sm text-gray-400">Resgate vantagens e receba moedas para desbloquear badges!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -181,24 +175,62 @@ export function Conquistas() {
                         key={badgeItem.id}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.1 }}
+                        transition={{ delay: idx * 0.05 }}
                         className="group relative"
                       >
-                        <Card className="border-2 border-purple-200 dark:border-purple-900/30 bg-white dark:bg-gray-800 hover:shadow-lg transition-all cursor-pointer overflow-hidden">
+                        <Card className={`border-2 transition-all cursor-pointer overflow-hidden ${
+                          badgeItem.desbloqueado
+                            ? "border-purple-200 dark:border-purple-900/30 bg-white dark:bg-gray-800 hover:shadow-lg"
+                            : "border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-60"
+                        }`}>
                           <CardContent className="p-6 space-y-4">
-                            <div className="text-5xl text-center">{badgeItem.badge.iconeUrl}</div>
-                            <div className="text-center space-y-2">
-                              <h3 className="font-black text-lg text-gray-900 dark:text-white">{badgeItem.badge.nome}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{badgeItem.badge.descricao}</p>
+                            <div className={`text-5xl text-center transition-all ${
+                              !badgeItem.desbloqueado ? "opacity-30" : ""
+                            }`}>
+                              {badgeItem.iconeUrl}
+                              {!badgeItem.desbloqueado && (
+                                <div className="text-xl mt-2">
+                                  <Lock className="w-6 h-6 mx-auto text-gray-400" />
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center justify-between text-xs font-bold bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
-                              <span className="flex items-center gap-1 text-purple-600">
+                            <div className="text-center space-y-2">
+                              <h3 className={`font-black text-lg ${
+                                badgeItem.desbloqueado
+                                  ? "text-gray-900 dark:text-white"
+                                  : "text-gray-500 dark:text-gray-500"
+                              }`}>
+                                {badgeItem.nome}
+                              </h3>
+                              <p className={`text-sm ${
+                                badgeItem.desbloqueado
+                                  ? "text-gray-500 dark:text-gray-400"
+                                  : "text-gray-400 dark:text-gray-600"
+                              }`}>
+                                {badgeItem.descricao}
+                              </p>
+                            </div>
+                            <div className={`flex items-center justify-between text-xs font-bold p-3 rounded-lg ${
+                              badgeItem.desbloqueado
+                                ? "bg-purple-50 dark:bg-purple-900/20"
+                                : "bg-gray-200 dark:bg-gray-800"
+                            }`}>
+                              <span className={`flex items-center gap-1 ${
+                                badgeItem.desbloqueado
+                                  ? "text-purple-600"
+                                  : "text-gray-500"
+                              }`}>
                                 <Zap className="w-3 h-3" />
-                                +{badgeItem.badge.xpRecompensa} XP
+                                +{badgeItem.xpRecompensa} XP
                               </span>
-                              <span className="text-gray-400 text-[10px] uppercase tracking-widest">
-                                {new Date(badgeItem.dataConquista).toLocaleDateString('pt-BR')}
-                              </span>
+                              {badgeItem.desbloqueado && badgeItem.dataConquista && (
+                                <span className="text-gray-400 text-[10px] uppercase tracking-widest">
+                                  {new Date(badgeItem.dataConquista).toLocaleDateString('pt-BR')}
+                                </span>
+                              )}
+                              {!badgeItem.desbloqueado && (
+                                <span className="text-gray-500 text-[10px] uppercase tracking-widest">BLOQUEADO</span>
+                              )}
                             </div>
                           </CardContent>
                         </Card>
