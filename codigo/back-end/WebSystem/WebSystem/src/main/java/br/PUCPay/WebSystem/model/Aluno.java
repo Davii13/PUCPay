@@ -32,6 +32,24 @@ public class Aluno extends Usuario {
 
     private Double saldo = 0.0;
 
+    @Column(nullable = false)
+    private Integer xpTotal = 0;
+
+    @Column(nullable = false)
+    private Integer totalResgates = 0;
+
+    @Column(nullable = false)
+    private Double totalMoedasRecebidas = 0.0;
+
+    public Integer getNivel() {
+        return Math.max(1, (xpTotal / 100) + 1);
+    }
+
+    public Integer getXpProximoNivel() {
+        Integer proximoNivel = getNivel() + 1;
+        return (proximoNivel * 100) - xpTotal;
+    }
+
     public Aluno(String nome, String email, String login, String senha, String cpf, String rg, String endereco,
             Instituicao instituicao, String curso) {
         super();
@@ -46,5 +64,8 @@ public class Aluno extends Usuario {
         this.instituicao = instituicao;
         this.curso = curso;
         this.saldo = 0.0;
+        this.xpTotal = 0;
+        this.totalResgates = 0;
+        this.totalMoedasRecebidas = 0.0;
     }
 }

@@ -12,6 +12,8 @@ import { Profile } from "./pages/Profile";
 import { NotFound } from "./pages/NotFound";
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { ValidateCoupon } from "./pages/ValidateCoupon";
+import { Conquistas } from "./pages/student/Conquistas";
+import { Leaderboard } from "./pages/student/Leaderboard";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +37,8 @@ export const router = createBrowserRouter([
       { path: "marketplace", Component: Marketplace },
       { path: "transactions", Component: Transactions },
       { path: "profile", Component: Profile },
+      { path: "conquistas", Component: Conquistas },
+      { path: "leaderboard", Component: Leaderboard },
       { path: "*", Component: NotFound },
     ],
   },

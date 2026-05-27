@@ -190,10 +190,18 @@ export function StudentDashboard() {
                     <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Meu Perfil</span>
                   </div>
                 </Link>
-                <div className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all text-center cursor-pointer">
-                  <Sparkles className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Missões</span>
-                </div>
+                <Link to="/conquistas">
+                  <div className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all text-center">
+                    <Sparkles className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Conquistas</span>
+                  </div>
+                </Link>
+                <Link to="/leaderboard">
+                  <div className="p-4 rounded-2xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-all text-center">
+                    <TrendingUp className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Ranking</span>
+                  </div>
+                </Link>
               </CardContent>
               <div className="px-4 pb-4 mt-auto">
                 <Button variant="ghost" className="w-full text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 group">

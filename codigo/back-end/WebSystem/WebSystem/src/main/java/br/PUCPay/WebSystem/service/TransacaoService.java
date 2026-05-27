@@ -39,6 +39,9 @@ public class TransacaoService {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
+    @Autowired
+    private GamificacaoService gamificacaoService;
+
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
@@ -77,6 +80,8 @@ public class TransacaoService {
 
         Transacao salva = transacaoDAO.save(transacao);
 
+        gamificacaoService.registrarRecebimentoMoedas(aluno.getId(), dto.getValor());
+
         emailService.enviarNotificacaoMoedas(
                 aluno.getEmail(), aluno.getNome(),
                 professor.getNome(), dto.getValor(), dto.getMensagem()
@@ -99,6 +104,8 @@ public class TransacaoService {
 
         aluno.setSaldo(aluno.getSaldo() - vantagem.getCusto());
         alunoDAO.update(aluno);
+
+        gamificacaoService.registrarResgate(aluno.getId(), vantagem.getCusto());
 
         String codigo = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
