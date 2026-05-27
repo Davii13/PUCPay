@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/instituicoes")
-@CrossOrigin(origins = "*")
 public class InstituicaoController {
 
     @PersistenceContext

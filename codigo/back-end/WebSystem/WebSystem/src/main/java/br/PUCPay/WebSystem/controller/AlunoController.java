@@ -13,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/alunos")
-@CrossOrigin(origins = "*")
 public class AlunoController {
 
     @Autowired

@@ -1,14 +1,14 @@
 import { useAuth } from "../../context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { 
-  Coins, 
-  TrendingUp, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Gift, 
-  Eye, 
-  Wallet, 
+import {
+  Coins,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  Gift,
+  Eye,
+  Wallet,
   ArrowRight,
   Sparkles,
   ShoppingBag,
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Badge } from "../../components/ui/badge";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
