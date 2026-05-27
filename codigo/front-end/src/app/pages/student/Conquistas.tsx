@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Badge, BadgeIcon } from "../../components/ui/badge";
-import { Loader2, Trophy, Zap, Lock, Sparkles } from "lucide-react";
+import { Badge } from "../../components/ui/badge";
+import { Loader2, Trophy, Zap, Lock, Sparkles, Award } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { fetchApi } from "../../services/api";
 import { toast } from "sonner";
@@ -156,9 +156,7 @@ export function Conquistas() {
           <Card className="border-none shadow-xl bg-white dark:bg-gray-900 overflow-hidden">
             <CardHeader className="p-8 border-b border-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50">
               <CardTitle className="text-2xl font-black flex items-center gap-2">
-                <Badge className="w-5 h-5 text-purple-600">
-                  <BadgeIcon className="w-5 h-5" />
-                </Badge>
+                <Award className="w-5 h-5 text-purple-600" />
                 Seus Badges
               </CardTitle>
               <CardDescription>Você desbloqueou {badges.length} badge(s)</CardDescription>
