@@ -1,0 +1,119 @@
+@startuml PUCPay_Transacao_Sequencia
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam backgroundColor #F8F8F8
+skinparam fontFamily "Roboto"
+
+title Diagrama de Sequência - PUCPay: Transferência de Moedas (Professor → Aluno)
+
+actor Professor as prof
+participant "Frontend\n(React)" as frontend
+participant "API REST\n(Spring Boot)" as api
+participant "TransacaoService" as service
+participant "TransacaoDAO" as dao
+participant "Database\n(MySQL)" as db
+participant "Email Service\n(Spring Mail)" as email
+actor Aluno as aluno
+
+prof -> frontend: 1. Acessa Dashboard\ne insere valor + mensagem
+activate frontend
+
+frontend -> api: 2. POST /api/transacoes/enviar\n{professorId, alunoId, valor, mensagem}
+activate api
+
+api -> service: 3. processarTransacao()
+activate service
+
+service -> service: 4. Validar saldo do professor
+note over service
+  - Verificar se professor tem saldo >= valor
+  - Validar se valor > 0
+end note
+
+service -> dao: 5. buscarProfessor(professorId)
+activate dao
+dao -> db: 6. SELECT * FROM Usuario u\nJOIN Professor p ON u.id = p.usuario_id
+activate db
+db --> dao: Retorna dados do Professor
+deactivate db
+dao --> service: Retorna entidade Professor
+deactivate dao
+
+service -> service: 7. Verificar saldo suficiente
+note over service
+  Professor.saldo >= valor?
+end note
+
+service -> dao: 8. buscarAluno(alunoId)
+activate dao
+dao -> db: 9. SELECT * FROM Usuario u\nJOIN Aluno a ON u.id = a.usuario_id
+activate db
+db --> dao: Retorna dados do Aluno
+deactivate db
+dao --> service: Retorna entidade Aluno
+deactivate dao
+
+service -> service: 10. Atualizar saldos\n(Professor: -X | Aluno: +X)
+
+service -> dao: 11. salvarTransacao(transacao)
+activate dao
+
+dao -> db: 12. INSERT INTO Transacao\n(tipo, valor, mensagem, dataHora, codigoCupom,\nprofessor_id, aluno_id)
+activate db
+db --> dao: Retorna Transacao com ID
+deactivate db
+
+dao -> db: 13. UPDATE Usuario SET saldo = saldo - valor\nWHERE id = professor_id
+activate db
+db --> dao: ✓ Sucesso
+deactivate db
+
+dao -> db: 14. UPDATE Usuario SET saldo = saldo + valor\nWHERE id = aluno_id
+activate db
+db --> dao: ✓ Sucesso
+deactivate db
+
+dao --> service: Retorna Transacao salva
+deactivate dao
+
+service -> email: 15. enviarEmailNotificacao(transacao, professor, aluno)
+activate email
+note over email
+  Email para Professor:
+  - Moedas enviadas: X PUCCoins
+  - Aluno: [nome]
+  - Mensagem: [mensagem]
+end note
+email -> email: 16. Template de email
+email --> prof: 📧 Email enviado
+email --> aluno: 📧 Email enviado
+deactivate email
+
+service --> api: 17. Retorna response de sucesso
+deactivate service
+
+api --> frontend: 18. {status: 200, transacaoId, novoSaldo}
+deactivate api
+
+frontend -> frontend: 19. Atualizar saldo em tempo real\ne exibir notificação de sucesso
+frontend --> prof: ✅ Sucesso! X PUCCoins enviadas
+deactivate frontend
+
+aluno -> frontend: 20. Verifica Dashboard\ne vê novo saldo
+activate frontend
+frontend -> api: 21. GET /api/transacoes/aluno/{alunoId}
+activate api
+api -> dao: 22. buscarTransacoesAluno(alunoId)
+activate dao
+dao -> db: 23. SELECT * FROM Transacao\nWHERE aluno_id = ? OR professor_id = ?\nORDER BY dataHora DESC
+activate db
+db --> dao: Retorna lista de transações
+deactivate db
+dao --> api: Retorna DTOs de transações
+deactivate dao
+api --> frontend: 24. {transacoes: [...], saldoAtual}
+deactivate api
+frontend --> aluno: 📊 Extrato atualizado com nova moeda
+deactivate frontend
+
+@enduml

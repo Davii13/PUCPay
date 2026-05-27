@@ -1,0 +1,162 @@
+@startuml PUCPay_Resgate_Vantagem_Sequencia
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam backgroundColor #F8F8F8
+skinparam fontFamily "Roboto"
+
+title Diagrama de Sequência - PUCPay: Resgate de Vantagem (Aluno → Empresa)
+
+actor Aluno as aluno
+participant "Frontend\n(React)" as frontend
+participant "API REST\n(Spring Boot)" as api
+participant "TransacaoService" as service
+participant "VantagemDAO" as vdao
+participant "TransacaoDAO" as tdao
+participant "Database\n(MySQL)" as db
+participant "Email Service\n(Spring Mail)" as email
+actor Empresa as empresa
+
+aluno -> frontend: 1. Acessa Marketplace\ne clica em vantagem
+activate frontend
+
+frontend -> api: 2. GET /api/vantagens/{vantagemId}
+activate api
+api -> vdao: 3. buscarVantagem(vantagemId)
+activate vdao
+vdao -> db: 4. SELECT * FROM Vantagem\nWHERE id = ?
+activate db
+db --> vdao: Retorna dados da Vantagem
+deactivate db
+vdao --> api: Retorna VantagemDTO
+deactivate vdao
+api --> frontend: 5. {vantagem: {...}, custo, empresa}
+deactivate api
+
+frontend --> aluno: 6. Exibe detalhes:\ntítulo, descrição, custo, foto
+note over frontend
+  Glassmorphism card com
+  animações fluídas
+end note
+
+aluno -> frontend: 7. Clica em "Resgatar"
+frontend -> frontend: 8. Exibe modal de confirmação
+aluno -> frontend: 9. Confirma resgate
+
+frontend -> api: 10. POST /api/transacoes/resgatar\n{alunoId, vantagemId, valor}
+activate api
+
+api -> service: 11. processarResgate(alunoId, vantagemId)
+activate service
+
+service -> service: 12. Validar pré-requisitos
+note over service
+  - Aluno existe?
+  - Vantagem existe?
+  - Aluno tem saldo >= custo?
+  - Vantagem ainda disponível?
+end note
+
+service -> vdao: 13. buscarVantagem(vantagemId)
+activate vdao
+vdao -> db: 14. SELECT v.* FROM Vantagem v\nJOIN Empresa e ON v.empresa_id = e.id\nWHERE v.id = ?
+activate db
+db --> vdao: Retorna Vantagem + Empresa
+deactivate db
+vdao --> service: Retorna entidade Vantagem
+deactivate vdao
+
+service -> tdao: 15. buscarAluno(alunoId)
+activate tdao
+tdao -> db: 16. SELECT * FROM Usuario u\nJOIN Aluno a ON u.id = a.usuario_id\nWHERE u.id = ?
+activate db
+db --> tdao: Retorna dados do Aluno
+deactivate db
+tdao --> service: Retorna entidade Aluno
+deactivate tdao
+
+service -> service: 17. Gerar código de cupom único\n(gerarCodigoCupom())
+note over service
+  Formato: CUPOM-[random]-[timestamp]
+  Ex: CUPOM-A7K9J2-20250526
+end note
+
+service -> tdao: 18. salvarTransacao(transacao)
+activate tdao
+
+tdao -> db: 19. INSERT INTO Transacao\n(tipo='RESGATE', valor, codigoCupom,\ndataHora, aluno_id, vantagem_id)
+activate db
+db --> tdao: Retorna Transacao salva
+deactivate db
+
+tdao -> db: 20. UPDATE Usuario SET saldo = saldo - valor\nWHERE id = aluno_id
+activate db
+db --> tdao: ✓ Novo saldo debitado
+deactivate db
+
+tdao --> service: Retorna Transacao com código
+deactivate tdao
+
+service -> email: 21. enviarCupomAluno(aluno, cupom, vantagem)
+activate email
+note over email
+  Email para Aluno:
+  - Código do cupom: CUPOM-A7K9J2-20250526
+  - Vantagem: [nome da vantagem]
+  - Empresa: [nome da empresa]
+  - Válido até: [data expiracao]
+end note
+email --> aluno: 📧 Cupom enviado
+deactivate email
+
+service -> email: 22. enviarNotificacaoEmpresa(empresa, cupom, vantagem)
+activate email
+note over email
+  Email para Empresa:
+  - Novo cupom resgatado
+  - Aluno: [nome]
+  - Código: CUPOM-A7K9J2-20250526
+  - Vantagem: [nome]
+  - Data: [dataHora]
+end note
+email --> empresa: 📧 Notificação enviada
+deactivate email
+
+service --> api: 23. Retorna sucesso com cupom
+deactivate service
+
+api --> frontend: 24. {status: 200, codigoCupom,\nnovoSaldo, mensagem_sucesso}
+deactivate api
+
+frontend -> frontend: 25. Exibir modal de sucesso\ncom código do cupom
+frontend --> aluno: ✅ Resgate realizado!\nCódigo: CUPOM-A7K9J2-20250526
+note over frontend
+  QR Code gerado com código
+  para facilitar apresentação
+  à empresa
+end note
+
+aluno -> frontend: 26. Salva/compartilha cupom
+frontend -> frontend: 27. Gera QR Code do cupom\n(para apresentar à empresa)
+
+aluno -> empresa: 28. Apresenta cupom/QR Code
+empresa -> frontend: 29. Acessa painel de validação\nde cupons
+
+activate frontend
+frontend -> api: 30. GET /api/cupons/{codigoCupom}
+activate api
+api -> tdao: 31. buscarPorCodigoCupom(codigo)
+activate tdao
+tdao -> db: 32. SELECT * FROM Transacao\nWHERE codigoCupom = ?\nAND tipo = 'RESGATE'
+activate db
+db --> tdao: Retorna Transacao
+deactivate db
+tdao --> api: Retorna dados do cupom
+deactivate tdao
+api --> frontend: 33. {cupom: {...}, valido, aluno, vantagem}
+deactivate api
+frontend --> empresa: 34. Exibe validação:\nAluno, Vantagem, Data
+deactivate frontend
+
+empresa -> empresa: 35. Confirma/entrega vantagem\nao aluno
+
+@enduml
