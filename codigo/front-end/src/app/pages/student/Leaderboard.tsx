@@ -25,15 +25,16 @@ export function Leaderboard() {
     setLoading(true);
     fetchApi("/gamificacao/leaderboard")
       .then((data) => {
-        setRanking(data);
-        const userPos = data.findIndex((item: RankingItem) => item.id === parseInt(user?.id || "0"));
+        setRanking(data || []);
+        const userPos = data?.findIndex((item: RankingItem) => item.id === parseInt(user?.id || "0")) ?? -1;
         if (userPos >= 0) {
           setUserRank(userPos + 1);
         }
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Erro ao carregar ranking:", err);
         toast.error("Erro ao carregar ranking");
+        setRanking([]);
       })
       .finally(() => setLoading(false));
   }, [user]);

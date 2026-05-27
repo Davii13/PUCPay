@@ -20,9 +20,13 @@ public class GamificacaoController {
     @GetMapping("/aluno/{id}/badges")
     public ResponseEntity<List<AlunoBadge>> getBadgesAluno(@PathVariable Long id) {
         try {
+            System.out.println("[GAMIFICACAO] Buscando badges para aluno: " + id);
             List<AlunoBadge> badges = gamificacaoService.getBadgesAluno(id);
+            System.out.println("[GAMIFICACAO] Badges encontrados: " + badges.size());
             return ResponseEntity.ok(badges);
         } catch (Exception e) {
+            System.err.println("[GAMIFICACAO] Erro ao buscar badges: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -49,24 +53,26 @@ public class GamificacaoController {
     }
 
     @GetMapping("/leaderboard")
-    public ResponseEntity<List<Map<String, Object>>> getLeaderboard() {
+    public ResponseEntity<?> getLeaderboard() {
         try {
             List<Aluno> leaderboard = gamificacaoService.getLeaderboard();
 
-            List<Map<String, Object>> resultado = leaderboard.stream()
+            var resultado = leaderboard.stream()
                 .limit(50)
-                .map(aluno -> Map.of(
-                    "id", aluno.getId(),
-                    "nome", aluno.getNome(),
-                    "xpTotal", aluno.getXpTotal(),
-                    "nivel", aluno.getNivel(),
-                    "totalResgates", aluno.getTotalResgates(),
-                    "saldo", aluno.getSaldo()
+                .map(aluno -> Map.ofEntries(
+                    Map.entry("id", aluno.getId()),
+                    Map.entry("nome", aluno.getNome()),
+                    Map.entry("xpTotal", aluno.getXpTotal()),
+                    Map.entry("nivel", aluno.getNivel()),
+                    Map.entry("totalResgates", aluno.getTotalResgates()),
+                    Map.entry("saldo", aluno.getSaldo())
                 ))
                 .toList();
 
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
+            System.err.println("[GAMIFICACAO] Erro ao buscar leaderboard: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }

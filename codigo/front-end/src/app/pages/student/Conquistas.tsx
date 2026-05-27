@@ -39,15 +39,15 @@ export function Conquistas() {
     if (user?.id) {
       setLoading(true);
       Promise.all([
-        fetchApi(`/gamificacao/aluno/${user.id}/badges`),
-        fetchApi(`/gamificacao/aluno/${user.id}/progresso`)
+        fetchApi(`/gamificacao/aluno/${user.id}/badges`).catch(() => []),
+        fetchApi(`/gamificacao/aluno/${user.id}/progresso`).catch(() => null)
       ])
         .then(([badgesData, progressoData]) => {
-          setBadges(badgesData);
+          setBadges(badgesData || []);
           setProgresso(progressoData);
         })
         .catch((err) => {
-          console.error(err);
+          console.error("Erro ao carregar conquistas:", err);
           toast.error("Erro ao carregar conquistas");
         })
         .finally(() => setLoading(false));
