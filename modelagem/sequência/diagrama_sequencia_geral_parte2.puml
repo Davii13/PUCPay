@@ -1,0 +1,156 @@
+@startuml Diagrama de Sequência Geral - PUCPay Parte 2
+!theme plain
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 0
+skinparam maxMessageSize 400
+skinparam backgroundColor #FEFEFE
+
+actor "Usuário" as User
+participant "Frontend\n(React)" as Frontend
+participant "API REST\n(Spring Boot)" as API
+participant "Serviço de\nValidação" as Valid
+participant "Banco de\nDados" as BD
+participant "Serviço de\nTransação" as Trans
+participant "Serviço de\nNotificação" as Notif
+
+== 3.2 GERENCIAR VANTAGENS (EMPRESA) ==
+
+User -> Frontend: 1. Acessar lista vantagens
+Frontend -> API: 2. GET /api/vantagens/empresa
+API -> BD: 3. Consultar vantagens
+BD -> API: 4. Retornar vantagens
+API -> Frontend: 5. Exibir vantagens
+Frontend -> User: 6. Lista de vantagens
+
+User -> Frontend: 7. Editar vantagem
+Frontend -> API: 8. PUT /api/vantagens/{id}
+API -> Valid: 9. Validar dados
+
+alt Válido
+  Valid -> API: 10a. OK
+  API -> Trans: 11a. BEGIN TRANSACTION
+  Trans -> BD: 12a. UPDATE vantagem
+  Trans -> BD: 13a. COMMIT
+  API -> Frontend: 14a. Sucesso
+  Frontend -> User: 15a. Vantagem atualizada
+else Inválido
+  Valid -> API: 10b. Erro
+  API -> Frontend: 11b. Retornar erro
+end
+
+User -> Frontend: 16. Deletar vantagem
+Frontend -> API: 17. DELETE /api/vantagens/{id}
+API -> Trans: 18. BEGIN TRANSACTION
+Trans -> BD: 19. DELETE vantagem
+Trans -> BD: 20. COMMIT
+API -> Frontend: 21. Sucesso
+Frontend -> User: 22. Vantagem deletada
+
+== 3.3 RELATÓRIOS EMPRESA ==
+
+User -> Frontend: 23. Acessar relatórios
+Frontend -> API: 24. GET /api/empresa/relatorios
+API -> BD: 25. Consultar dados
+BD -> API: 26. Retornar estatísticas
+API -> Frontend: 27. Exibir gráficos
+Frontend -> User: 28. Relatórios e estatísticas
+
+== 4. OPERAÇÕES DO PROFESSOR ==
+
+alt Usuário é Professor
+  User -> Frontend: 29. Acessar dashboard professor
+  Frontend -> API: 30. GET /api/professor/dashboard
+  API -> BD: 31. Consultar saldo
+  BD -> API: 32. Retornar saldo
+  API -> Frontend: 33. Exibir dashboard
+  Frontend -> User: 34. Saldo de moedas
+
+  == 4.1 VER MOEDAS RECEBIDAS ==
+
+  User -> Frontend: 35. Acessar histórico moedas
+  Frontend -> API: 36. GET /api/professor/moedas
+  API -> BD: 37. Consultar transações
+  BD -> API: 38. Retornar histórico
+  API -> Frontend: 39. Exibir transações
+  Frontend -> User: 40. Histórico detalhado
+
+else Usuário é Aluno
+
+  == 5. OPERAÇÕES DO ALUNO ==
+
+  User -> Frontend: 41. Acessar dashboard aluno
+  Frontend -> API: 42. GET /api/aluno/dashboard
+  API -> BD: 43. Consultar saldo
+  BD -> API: 44. Retornar saldo
+  API -> Frontend: 45. Exibir dashboard
+  Frontend -> User: 46. Saldo de moedas
+
+  == 5.1 VER VANTAGENS DISPONÍVEIS ==
+
+  User -> Frontend: 47. Acessar vantagens
+  Frontend -> API: 48. GET /api/vantagens/disponiveis
+  API -> BD: 49. Consultar vantagens ativas
+  BD -> API: 50. Retornar vantagens
+  API -> Frontend: 51. Exibir vantagens
+  Frontend -> User: 52. Lista de vantagens
+
+  User -> Frontend: 53. Ver detalhes vantagem
+  Frontend -> API: 54. GET /api/vantagens/{id}
+  API -> BD: 55. Consultar detalhes
+  BD -> API: 56. Retornar dados
+  API -> Frontend: 57. Exibir detalhes
+  Frontend -> User: 58. Descrição completa
+
+  == 5.2 RESGATE DE VANTAGEM ==
+
+  User -> Frontend: 59. Clicar resgatar
+  Frontend -> API: 60. POST /api/resgates
+  API -> Valid: 61. Validar resgate
+
+  alt Válido
+    Valid -> API: 62a. Pode resgatar
+    API -> Trans: 63a. BEGIN TRANSACTION
+    Trans -> BD: 64a. INSERT resgate
+    Trans -> BD: 65a. Debitar moedas aluno
+    Trans -> BD: 66a. COMMIT
+
+    API -> Notif: 67a. Notificar aluno
+    API -> Frontend: 68a. Sucesso
+    Frontend -> User: 69a. Resgate confirmado
+
+  else Inválido
+    Valid -> API: 62b. Não pode resgatar
+    API -> Frontend: 63b. Motivo negação
+    Frontend -> User: 64b. Mensagem erro
+  end
+
+  == 5.3 VER HISTÓRICO ==
+
+  User -> Frontend: 65. Acessar histórico
+  Frontend -> API: 66. GET /api/aluno/historico
+  API -> BD: 67. Consultar transações
+  BD -> API: 68. Retornar histórico
+  API -> Frontend: 69. Exibir transações
+  Frontend -> User: 70. Histórico completo
+
+end
+
+== 6. NOTIFICAÇÕES GLOBAIS ==
+
+API -> Notif: 71. POST /api/notificacoes/fila
+Notif -> Notif: 72. Processar fila
+par Canais
+  Notif -> User: 73. Email
+  Notif -> User: 74. Push Notification
+  Notif -> Frontend: 75. In-app
+end
+Notif -> API: 76. Confirmar envio
+
+== 7. LOGOUT ==
+
+User -> Frontend: 77. Clicar logout
+Frontend -> API: 78. POST /api/auth/logout
+API -> Frontend: 79. Redirecionar login
+Frontend -> User: 80. Página login
+
+@enduml

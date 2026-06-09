@@ -1,0 +1,34 @@
+@startuml Cadastrar Vantagem e Enviar Moedas ao Aluno
+!theme plain
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 0
+skinparam maxMessageSize 300
+
+actor "Empresa" as Admin
+participant "Sistema\nWeb" as Web
+database "Banco de\nDados" as BD
+participant "Serviço de\nNotificação" as Notif
+participant "Aluno" as Aluno
+
+Admin -> Web: 1. Acessar módulo de vantagens
+Web -> Web: 2. Exibir formulário de cadastro
+Admin -> Web: 3. Preencher dados da vantagem\n(nome, descrição, moedas, regras)
+Web -> Web: 4. Validar dados
+Web -> BD: 5. Inserir nova vantagem
+BD -> BD: 6. Salvar vantagem no banco
+BD -> Web: 7. Confirmar inserção
+Web -> Web: 8. Gerar listagem de alunos elegíveis
+Web -> BD: 9. Consultar alunos (filtros aplicáveis)
+BD -> Web: 10. Retornar lista de alunos
+Admin -> Web: 11. Selecionar alunos para receber moedas
+Web -> Web: 12. Validar seleção
+Web -> BD: 13. Registrar transação de moedas\npara cada aluno
+BD -> BD: 14. Atualizar saldo de moedas\nde cada aluno
+BD -> Web: 15. Confirmar atualização
+Web -> Notif: 16. Enviar notificação para alunos\n(vantagem disponível + moedas creditadas)
+Notif -> Aluno: 17. Entrega notificação ao aluno\n(email/push notification)
+Aluno -> Aluno: 18. Aluno recebe notificação
+Web -> Web: 19. Registrar histórico de operação
+Web -> Admin: 20. Confirmar conclusão\n(moedas enviadas com sucesso)
+
+@enduml

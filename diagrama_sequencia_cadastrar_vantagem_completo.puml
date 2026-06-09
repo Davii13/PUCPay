@@ -1,0 +1,134 @@
+@startuml Cadastrar Vantagem e Enviar Moedas - Completo
+!theme plain
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 0
+skinparam maxMessageSize 400
+skinparam backgroundColor #FEFEFE
+
+actor "Administrador" as Admin
+participant "Frontend\n(React)" as Frontend
+participant "API REST\n(Spring Boot)" as API
+participant "Serviço de\nAutenticação" as Auth
+participant "Serviço de\nValidação" as Valid
+participant "Banco de\nDados" as BD
+participant "Serviço de\nTransação" as Trans
+participant "Serviço de\nNotificação" as Notif
+participant "Aluno" as Aluno
+
+Admin -> Frontend: 1. Acessar módulo de vantagens
+Frontend -> API: 2. GET /api/admin/me
+API -> Auth: 3. Validar token JWT
+
+alt Autenticação Válida
+  Auth -> API: 4a. Admin autorizado
+  API -> Frontend: 5a. Retornar interface
+  Frontend -> Admin: 6a. Exibir formulário
+else Token Inválido
+  Auth -> API: 4b. Erro 401
+  API -> Frontend: 5b. Redirecionar login
+end
+
+Admin -> Frontend: 7. Preencher dados vantagem
+note right of Admin
+  Nome, Descrição, Moedas
+  Data início/fim
+  Critérios elegibilidade
+end note
+
+Frontend -> Frontend: 8. Validar campos obrigatórios
+alt Campos Válidos
+  Frontend -> Admin: 9a. Validação OK
+else Inválidos
+  Frontend -> Admin: 9b. Exibir erros
+end
+
+Admin -> Frontend: 10. Carregar imagem (opcional)
+alt Com Imagem
+  Frontend -> Frontend: 11a. Validar tipo/tamanho
+  alt Válida
+    Frontend -> Admin: 12a. Imagem OK
+  else Inválida
+    Frontend -> Admin: 12b. Erro imagem
+  end
+else Sem Imagem
+  Frontend -> Admin: 11b. Usar padrão
+end
+
+Admin -> Frontend: 13. Confirmar criação
+Frontend -> API: 14. POST /api/vantagens
+
+API -> Auth: 15. Validar permissão admin
+alt Autorizado
+  Auth -> API: 16a. OK
+else Negado
+  Auth -> API: 16b. Erro 403
+  API -> Frontend: 17b. Acesso negado
+end
+
+API -> Valid: 17a. Validar dados
+alt Válidos
+  Valid -> API: 18a. OK
+else Inválidos
+  Valid -> API: 18b. Erro 400
+  API -> Frontend: 19b. Exibir erro
+end
+
+API -> BD: 19a. Verificar nome único
+BD -> API: 20a. Resultado
+alt Nome Único
+  API -> API: 21a. Continuar
+else Duplicado
+  API -> Frontend: 21b. Erro duplicado
+end
+
+API -> Trans: 22. BEGIN TRANSACTION
+Trans -> BD: 23. INSERT INTO vantagens
+BD -> Trans: 24. Confirmar inserção
+Trans -> API: 25. Vantagem criada
+
+API -> BD: 26. Consultar alunos elegíveis
+BD -> API: 27. Retornar lista alunos
+alt Encontrados
+  API -> Admin: 28a. Solicitar distribuição
+else Nenhum
+  API -> Admin: 28b. Aviso nenhum elegível
+end
+
+Admin -> Frontend: 29. Confirmar distribuição
+Frontend -> API: 30. POST distribuir moedas
+
+API -> Trans: 31. BEGIN TRANSACTION (lote)
+
+loop Para cada aluno (batch)
+  Trans -> BD: 32. Debitar admin
+  Trans -> BD: 33. Creditar aluno
+  Trans -> BD: 34. INSERT transacao
+  BD -> Trans: 35. Confirmar
+end
+
+Trans -> BD: 36. COMMIT TRANSACTION
+Trans -> API: 37. Transação completa
+
+API -> BD: 38. INSERT INTO auditoria
+API -> Notif: 39. Enviar notificações
+
+Notif -> Notif: 40. Processar fila
+par Notificações Paralelas
+  Notif -> Aluno: 41. Email
+  Notif -> Aluno: 42. Push
+  Notif -> Aluno: 43. In-app
+end
+
+Notif -> API: 44. Confirmar envio
+
+API -> Frontend: 45. Retornar sucesso
+Frontend -> Admin: 46. Confirmar sucesso
+
+Admin -> Frontend: 47. Acessar relatório
+Frontend -> API: 48. GET relatório
+API -> BD: 49. Consultar dados vantagem
+API -> BD: 50. Consultar transações
+API -> Frontend: 51. Retornar relatório
+Frontend -> Admin: 52. Exibir gráficos e estatísticas
+
+@enduml

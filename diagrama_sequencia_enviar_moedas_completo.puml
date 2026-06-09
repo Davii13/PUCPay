@@ -1,0 +1,217 @@
+@startuml Enviar Moedas ao Aluno - Completo
+!theme plain
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 0
+skinparam maxMessageSize 400
+skinparam backgroundColor #FEFEFE
+
+actor "Administrador" as Admin
+participant "Frontend\n(React)" as Frontend
+participant "API REST\n(Spring Boot)" as API
+participant "Serviço de\nAutenticação" as Auth
+participant "Serviço de\nValidação" as Valid
+participant "Banco de\nDados" as BD
+participant "Serviço de\nTransação" as Trans
+participant "Serviço de\nNotificação" as Notif
+participant "Aluno" as Aluno
+
+Admin -> Frontend: 1. Acessar módulo de distribuição de moedas
+note right of Frontend
+  GET /api/distribuicao/moedas
+  Renderiza interface React
+end note
+
+Frontend -> API: 2. GET /api/admin/me\n(verificar permissão)
+API -> Auth: 3. Validar token JWT\n(admin/permissão moedas)
+alt Autenticação Válida
+  Auth -> API: 4a. Retornar dados admin
+  API -> Frontend: 5a. Retornar interface com dados
+  Frontend -> Admin: 6a. Exibir formulário de envio
+else Token Expirado/Inválido
+  Auth -> API: 4b. Erro 401 Unauthorized
+  API -> Frontend: 5b. Redirecionar para login
+  Frontend -> Admin: 6b. Exibir página de login
+  note right of Admin
+    Processo interrompido
+    Admin deve autenticar novamente
+  end note
+end
+
+Admin -> Frontend: 7. Buscar aluno por CPF/Matrícula
+Frontend -> API: 8. GET /api/alunos/buscar?termo=XXX
+
+API -> Valid: 9. Validar formato do termo
+alt Formato Válido
+  Valid -> API: 10a. Termo válido
+  API -> BD: 11a. Consultar alunos\n(SELECT * FROM alunos WHERE cpf=?)
+  BD -> API: 12a. Retornar lista de alunos
+  alt Aluno Encontrado
+    API -> BD: 13a1. Consultar status do aluno
+    BD -> API: 14a1. Retornar status (ativo/inativo)
+    alt Status Ativo
+      API -> Frontend: 15a1. Retornar dados do aluno
+      Frontend -> Admin: 16a1. Exibir dados do aluno\n(nome, matrícula, saldo atual)
+    else Status Inativo
+      API -> Frontend: 15a2. Erro 400 - Aluno inativo
+      Frontend -> Admin: 16a2. Exibir mensagem de erro
+      note right of Admin
+        Aluno não pode receber moedas
+        Status: inativo/bloqueado
+      end note
+    end
+  else Aluno Não Encontrado
+    API -> Frontend: 13b. Erro 404 - Aluno não encontrado
+    Frontend -> Admin: 14b. Exibir mensagem de erro
+    note right of Admin
+      Nenhum resultado encontrado
+      Admin deve tentar novo termo
+    end note
+  end
+else Formato Inválido
+  Valid -> API: 10b. Erro de validação
+  API -> Frontend: 11b. Erro 400 - Formato inválido
+  Frontend -> Admin: 12b. Exibir erro de validação
+  note right of Admin
+    CPF ou matrícula em formato inválido
+  end note
+end
+
+Admin -> Frontend: 17. Informar quantidade de moedas
+note right of Admin
+  Exemplos:
+  - 10 moedas
+  - 50 moedas
+  - 100 moedas
+end note
+
+Frontend -> API: 18. POST /api/moedas/enviar\nBody: {alunoId, quantidade, motivo}
+
+API -> Auth: 19. Validar permissão admin\n(token + role admin)
+alt Permissão Válida
+  Auth -> API: 20a. Admin autorizado
+else Permissão Negada
+  Auth -> API: 20b. Erro 403 Forbidden
+  API -> Frontend: 21b. Acesso negado
+  Frontend -> Admin: 22b. Exibir mensagem de acesso negado
+  note right of Admin
+    Você não tem permissão para enviar moedas
+  end note
+end
+
+API -> Valid: 21a. Validar quantidade\n(mínimo: 1, máximo: 10000)
+alt Quantidade Válida
+  Valid -> API: 22a. Quantidade validada
+else Quantidade Fora do Intervalo
+  Valid -> API: 22b. Erro 400 - Quantidade inválida
+  API -> Frontend: 23b. Retornar erro
+  Frontend -> Admin: 24b. Exibir erro de validação
+  note right of Admin
+    Quantidade deve estar entre 1 e 10000
+  end note
+end
+
+API -> BD: 23a. Consultar saldo do admin\n(SELECT saldo FROM usuarios WHERE id=?)
+BD -> API: 24a. Retornar saldo do admin
+alt Saldo Suficiente
+  API: 25a. Saldo >= quantidade
+else Saldo Insuficiente
+  API -> Frontend: 25b. Erro 400 - Saldo insuficiente
+  Frontend -> Admin: 26b. Exibir erro de saldo
+  note right of Admin
+    Saldo insuficiente para realizar operação
+    Saldo disponível: X moedas
+  end note
+end
+
+API -> Trans: 26a. Iniciar transação ACID\nBEGIN TRANSACTION
+note right of Trans
+  Garante consistência dos dados
+  Atomicidade e isolamento
+end note
+
+Trans -> BD: 27. Debitar moedas do admin\nUPDATE usuarios SET saldo = saldo - ?\nWHERE id = ?
+BD -> BD: 28. Validar constraint\n(saldo >= 0)
+alt Débito Bem-Sucedido
+  BD -> Trans: 29a. Confirmar débito
+  Trans -> BD: 30a. Creditar moedas no aluno\nUPDATE usuarios SET saldo = saldo + ?\nWHERE id = ?
+  BD -> Trans: 31a. Confirmar crédito
+else Erro de Débito
+  BD -> Trans: 29b. Falha na atualização
+  Trans -> API: 30b. Erro na transação
+  API -> Trans: 31b. ROLLBACK TRANSACTION
+  Trans -> BD: 32b. Reverter todas as operações
+  API -> Frontend: 33b. Erro 500 - Falha na transação
+  Frontend -> Admin: 34b. Exibir erro crítico
+  note right of Admin
+    Erro ao processar transação
+    Por favor, tente novamente
+  end note
+end
+
+Trans -> BD: 32a. COMMIT TRANSACTION
+note right of Trans
+  Confirmação permanente das alterações
+  Dados salvos no banco
+end note
+
+BD -> Trans: 33a. Transação confirmada
+Trans -> API: 34a. Retornar confirmação
+
+API -> BD: 35. Registrar histórico da transação\nINSERT INTO transacoes_moedas\n(admin_id, aluno_id, quantidade, motivo, timestamp, tipo)
+BD -> API: 36. Salvar histórico com sucesso
+
+API -> Notif: 37. Enviar notificação de crédito\nEmail + Push Notification
+note right of API
+  POST /api/notificacoes/enviar
+  Tipo: MOEDAS_RECEBIDAS
+  Canal: EMAIL, PUSH, IN_APP
+end note
+
+Notif -> Aluno: 38. Entregar notificação ao aluno\n(quantidade recebida, remetente, saldo atual, motivo)
+note right of Notif
+  Canais:
+  - Email (SMTP)
+  - Push (Firebase Cloud Messaging)
+  - In-app (Socket.io/WebSocket)
+end note
+
+alt Notificação Entregue
+  Aluno -> Aluno: 39a. Aluno recebe notificação
+  Notif -> API: 40a. Confirmar entrega
+else Falha na Entrega
+  Notif -> API: 40b. Log de falha (retentar depois)
+  note right of Notif
+    Email em fila de retentativas
+    Será reenviado em 30 min
+  end note
+end
+
+API -> Frontend: 41. Retornar sucesso\nStatus 200 OK
+note right of API
+  Response:
+  {
+    "sucesso": true,
+    "transacaoId": "uuid",
+    "alunoNome": "João Silva",
+    "quantidade": 50,
+    "saldoNovoAdmin": 450,
+    "saldoNovoAluno": 200,
+    "timestamp": "2026-06-03T14:30:00Z"
+  }
+end note
+
+Frontend -> Admin: 42. Exibir confirmação de sucesso
+note right of Admin
+  ✓ Transação realizada com sucesso
+
+  Detalhes:
+  - Aluno: João Silva (Mat. 202301)
+  - Moedas enviadas: 50
+  - Seu novo saldo: 450
+  - Saldo do aluno: 200
+  - ID Transação: abc-def-ghi
+
+  [Gerar Comprovante] [Enviar Outra]
+end note
+
+@enduml

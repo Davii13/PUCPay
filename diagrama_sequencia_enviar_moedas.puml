@@ -1,0 +1,39 @@
+@startuml Enviar Moedas ao Aluno
+!theme plain
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 0
+skinparam maxMessageSize 300
+
+actor "Administrador" as Admin
+participant "Sistema\nWeb" as Web
+participant "Banco de\nDados" as BD
+participant "Serviço de\nTransação" as Trans
+participant "Serviço de\nNotificação" as Notif
+participant "Aluno" as Aluno
+
+Admin -> Web: 1. Acessar módulo de distribuição de moedas
+Web -> Web: 2. Exibir interface de envio
+Admin -> Web: 3. Selecionar aluno(s) destinatário(s)
+Web -> BD: 4. Validar dados do aluno\n(status ativo, conta válida)
+BD -> Web: 5. Retornar informações do aluno
+Web -> Web: 6. Validar saldo disponível do admin
+Admin -> Web: 7. Informar quantidade de moedas a enviar
+Web -> Web: 8. Validar quantidade\n(mínimo/máximo, saldo suficiente)
+Admin -> Web: 9. Confirmar envio de moedas
+Web -> Trans: 10. Iniciar transação de transferência
+Trans -> BD: 11. Debitar moedas da conta do admin
+BD -> BD: 12. Atualizar saldo do admin
+BD -> Trans: 13. Confirmar débito
+Trans -> BD: 14. Creditar moedas na conta do aluno
+BD -> BD: 15. Atualizar saldo do aluno
+BD -> Trans: 16. Confirmar crédito
+Trans -> Web: 17. Confirmar conclusão da transação
+Web -> BD: 18. Registrar histórico da transação\n(admin, aluno, quantidade, timestamp)
+BD -> Web: 19. Salvar histórico
+Web -> Notif: 20. Enviar notificação de crédito
+Notif -> Aluno: 21. Entregar notificação ao aluno\n(quantidade recebida, remetente, saldo atual)
+Aluno -> Aluno: 22. Aluno recebe notificação
+Web -> Web: 23. Gerar comprovante de transação
+Web -> Admin: 24. Exibir confirmação\n(transação realizada com sucesso)
+
+@enduml
