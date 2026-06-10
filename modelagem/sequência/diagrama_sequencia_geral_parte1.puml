@@ -2,206 +2,293 @@
 !theme plain
 skinparam sequenceArrowThickness 2
 skinparam roundcorner 0
-skinparam maxMessageSize 400
+skinparam maxMessageSize 350
 skinparam backgroundColor #FEFEFE
+skinparam lifeline {
+  BackgroundColor #E8F4F8
+  BorderColor #0066CC
+}
+skinparam defaultFontSize 11
 
 actor "Usuário" as User
-participant "Frontend\n(React)" as Frontend
-participant "API REST\n(Spring Boot)" as API
-participant "Serviço de\nAutenticação" as Auth
-participant "Serviço de\nValidação" as Valid
-participant "Banco de\nDados" as BD
-participant "Serviço de\nTransação" as Trans
-participant "Serviço de\nNotificação" as Notif
+participant "Frontend" as Frontend
+participant "API" as API
+participant "Auth" as Auth
+participant "Validação" as Valid
+database "BD" as BD
+participant "Transação" as Trans
+queue "RabbitMQ" as Queue
+participant "Notif" as Notif
 
 == 1. AUTENTICAÇÃO E LOGIN ==
 
 User -> Frontend: 1. Acessar aplicação
+activate Frontend
 Frontend -> API: 2. GET /api/auth/status
+activate API
 API -> Auth: 3. Validar sessão
+activate Auth
 
 alt Sessão Válida
-  Auth -> API: 4a. Usuário autenticado
-  API -> Frontend: 5a. Dados do usuário
-  Frontend -> User: 6a. Redirecionar ao dashboard
+  Auth -> API: 4a. Autenticado
+  deactivate Auth
+  API -> Frontend: 5a. Dados usuário
+  deactivate API
+  Frontend -> User: 6a. Dashboard
+  deactivate Frontend
 else Sem Sessão
-  Auth -> API: 4b. Não autenticado
+  Auth -> API: 4b. Erro 401
+  deactivate Auth
   API -> Frontend: 5b. Exibir login
-  Frontend -> User: 6b. Formulário de login
+  deactivate API
+  Frontend -> User: 6b. Login
 
-  User -> Frontend: 7. Inserir login + senha
+  User -> Frontend: 7. Login + senha
+  activate Frontend
   Frontend -> API: 8. POST /api/auth/login
+  activate API
   API -> Auth: 9. Validar credenciais
+  activate Auth
 
-  alt Credenciais Válidas
+  alt Válido
     Auth -> BD: 10a. Consultar usuário
-    BD -> Auth: 11a. Retornar dados
-    Auth -> API: 12a. Gerar JWT token
-    API -> Frontend: 13a. Token + dados usuário
-    Frontend -> User: 14a. Redirecionar dashboard
-  else Credenciais Inválidas
+    activate BD
+    BD -> Auth: 11a. Usuário encontrado
+    deactivate BD
+    Auth -> API: 12a. JWT token
+    deactivate Auth
+    API -> Frontend: 13a. Token
+    deactivate API
+    Frontend -> User: 14a. Dashboard
+    deactivate Frontend
+  else Inválido
     Auth -> API: 12b. Erro 401
-    API -> Frontend: 13b. Erro autenticação
-    Frontend -> User: 14b. Mensagem erro
+    deactivate Auth
+    API -> Frontend: 13b. Erro auth
+    deactivate API
+    Frontend -> User: 14b. Erro
+    deactivate Frontend
   end
 end
 
-== 2. OPERAÇÕES DO ADMINISTRADOR ==
+== 2. ADMINISTRADOR - ENVIAR MOEDAS ==
 
-alt Usuário é Administrador
+alt Admin
   User -> Frontend: 15. Acessar painel admin
+  activate Frontend
   Frontend -> API: 16. GET /api/admin/dashboard
-  API -> BD: 17. Consultar dados dashboard
-  BD -> API: 18. Retornar estatísticas
-  API -> Frontend: 19. Exibir dashboard admin
-  Frontend -> User: 20. Dashboard com gráficos
+  activate API
+  API -> BD: 17. Consultar dashboard
+  activate BD
+  BD -> API: 18. Estatísticas
+  deactivate BD
+  API -> Frontend: 19. Dashboard
+  deactivate API
+  Frontend -> User: 20. Exibir gráficos
+  deactivate Frontend
 
-  == 2.1 ENVIO DE MOEDAS PARA PROFESSORES ==
+  User -> Frontend: 21. Buscar professor
+  activate Frontend
+  Frontend -> API: 22. GET /api/professores/buscar
+  activate API
+  API -> BD: 23. Consultar professor
+  activate BD
+  BD -> API: 24. Professor encontrado
+  deactivate BD
+  API -> Frontend: 25. Exibir professor
+  deactivate API
+  Frontend -> User: 26. Professor selecionado
+  deactivate Frontend
 
-  User -> Frontend: 21. Acessar envio moedas
-  Frontend -> API: 22. GET /api/moedas/enviar-professor
-  API -> Frontend: 23. Retornar formulário
+  User -> Frontend: 27. Informar quantidade
+  activate Frontend
+  Frontend -> API: 28. POST /api/moedas/enviar
+  activate API
+  API -> Valid: 29. Validar quantidade
+  activate Valid
 
-  User -> Frontend: 24. Buscar professor
-  Frontend -> API: 25. GET /api/professores/buscar?termo=XXX
-  API -> BD: 26. Consultar professor
-  BD -> API: 27. Retornar dados professor
-  API -> Frontend: 28. Exibir professor encontrado
-
-  User -> Frontend: 29. Informar quantidade moedas
-  Frontend -> API: 30. POST /api/moedas/enviar-professor
-  API -> Valid: 31. Validar quantidade
-
-  alt Quantidade Válida
-    Valid -> API: 32a. Validado
-    API -> BD: 33a. Verificar saldo admin
-    BD -> API: 34a. Retornar saldo
+  alt Quantidade OK
+    Valid -> API: 30a. Validado
+    deactivate Valid
+    API -> BD: 31a. Verificar saldo
+    activate BD
+    BD -> API: 32a. Saldo retornado
+    deactivate BD
 
     alt Saldo Suficiente
-      API -> Trans: 35a. BEGIN TRANSACTION
-      Trans -> BD: 36a. Debitar moedas admin
-      Trans -> BD: 37a. Creditar moedas professor
+      API -> Trans: 33a. BEGIN TRANSACTION
+      activate Trans
+      Trans -> BD: 34a. Debitar admin
+      activate BD
+      BD -> Trans: 35a. OK
+      deactivate BD
+      Trans -> BD: 36a. Creditar professor
+      activate BD
+      BD -> Trans: 37a. OK
+      deactivate BD
       Trans -> BD: 38a. INSERT transacao
-      Trans -> BD: 39a. COMMIT
+      activate BD
+      BD -> Trans: 39a. OK
+      deactivate BD
+      Trans -> BD: 40a. COMMIT
+      activate BD
+      BD -> Trans: 41a. Confirmado
+      deactivate BD
+      deactivate Trans
 
-      API -> BD: 40a. INSERT auditoria
-      API -> Notif: 41a. Notificar professor
-      Notif -> User: 42a. Email + Push notification
-      API -> Frontend: 43a. Sucesso
-      Frontend -> User: 44a. Confirmação moedas enviadas
+      API -> Queue: 42a. Enfileirar notif
+      activate Queue
+      Queue -> API: 43a. Enfileirada
+      deactivate Queue
+
+      API -> Notif: 44a. Processar notif
+      activate Notif
+      Notif -> User: 45a. Email + Push
+      Notif -> API: 46a. Enviado
+      deactivate Notif
+
+      API -> Frontend: 47a. Sucesso
+      deactivate API
+      Frontend -> User: 48a. Confirmação
+      deactivate Frontend
 
     else Saldo Insuficiente
-      API -> Frontend: 35b. Erro saldo
-      Frontend -> User: 36b. Mensagem erro saldo
+      API -> Frontend: 33b. Erro saldo
+      deactivate API
+      Frontend -> User: 34b. Erro
+      deactivate Frontend
     end
 
   else Quantidade Inválida
-    Valid -> API: 32b. Erro validação
-    API -> Frontend: 33b. Retornar erro
-    Frontend -> User: 34b. Exibir erro
+    Valid -> API: 30b. Erro
+    deactivate Valid
+    API -> Frontend: 31b. Erro validação
+    deactivate API
+    Frontend -> User: 32b. Erro
+    deactivate Frontend
   end
 
-  == 2.2 GERENCIAR MOEDAS ==
+else Empresa
 
-  User -> Frontend: 45. Acessar histórico transações
-  Frontend -> API: 46. GET /api/admin/transacoes
-  API -> BD: 47. Consultar transações
-  BD -> API: 48. Retornar histórico
-  API -> Frontend: 49. Exibir transações
-  Frontend -> User: 50. Histórico detalhado
+  == 3. EMPRESA - CRIAR VANTAGEM ==
 
-  User -> Frontend: 51. Acessar relatórios
-  Frontend -> API: 52. GET /api/admin/relatorios
-  API -> BD: 53. Consultar dados relatório
-  BD -> API: 54. Retornar estatísticas
-  API -> Frontend: 55. Exibir gráficos
-  Frontend -> User: 56. Relatórios admin
+  User -> Frontend: 49. Acessar criar vantagem
+  activate Frontend
+  Frontend -> API: 50. GET /api/vantagens/novo
+  activate API
+  API -> Frontend: 51. Formulário
+  deactivate API
+  Frontend -> User: 52. Formulário cadastro
+  deactivate Frontend
 
-else Usuário é Empresa
+  User -> Frontend: 53. Preencher dados
+  activate Frontend
+  Frontend -> Frontend: 54. Validar campos
 
-  == 3. OPERAÇÕES DA EMPRESA ==
+  alt Válido
+    Frontend -> API: 55a. POST /api/vantagens
+    activate API
+    API -> Valid: 56a. Validar dados
+    activate Valid
 
-  User -> Frontend: 57. Acessar painel empresa
-  Frontend -> API: 58. GET /api/empresa/dashboard
-  API -> BD: 59. Consultar dados empresa
-  BD -> API: 60. Retornar vantagens cadastradas
-  API -> Frontend: 61. Exibir dashboard empresa
-  Frontend -> User: 62. Dashboard com vantagens
+    alt OK
+      Valid -> API: 57a. Validado
+      deactivate Valid
+      API -> BD: 58a. Verificar nome único
+      activate BD
+      BD -> API: 59a. Disponível
+      deactivate BD
 
-  == 3.1 CADASTRO DE VANTAGEM ==
+      API -> Trans: 60a. BEGIN TRANSACTION
+      activate Trans
+      Trans -> BD: 61a. INSERT vantagem
+      activate BD
+      BD -> Trans: 62a. OK
+      deactivate BD
+      Trans -> BD: 63a. COMMIT
+      activate BD
+      BD -> Trans: 64a. Confirmado
+      deactivate BD
+      deactivate Trans
 
-  User -> Frontend: 63. Acessar criar vantagem
-  Frontend -> API: 64. GET /api/vantagens/novo
-  API -> Frontend: 65. Retornar formulário
+      API -> BD: 65a. Consultar alunos
+      activate BD
+      BD -> API: 66a. Lista alunos
+      deactivate BD
 
-  User -> Frontend: 66. Preencher dados vantagem
-  note right of User
-    Nome, Descrição
-    Quantidade moedas
-    Data início/fim
-  end note
+      alt Encontrados
+        API -> Frontend: 67a. Alunos elegíveis
+        deactivate API
+        Frontend -> User: 68a. Lista alunos
+        deactivate Frontend
 
-  Frontend -> Frontend: 67. Validar campos
-  alt Campos Válidos
-    Frontend -> API: 68a. POST /api/vantagens
-    API -> Valid: 69a. Validar dados
+        User -> Frontend: 69. Confirmar distribuição
+        activate Frontend
+        Frontend -> API: 70. POST distribuir
+        activate API
 
-    alt Dados OK
-      Valid -> API: 70a. Validado
-      API -> BD: 71a. Verificar nome único
-      BD -> API: 72a. Nome disponível
-
-      API -> Trans: 73a. BEGIN TRANSACTION
-      Trans -> BD: 74a. INSERT vantagem
-      BD -> Trans: 75a. Confirmar
-      Trans -> API: 76a. Vantagem criada
-
-      API -> BD: 77a. Consultar alunos elegíveis
-      BD -> API: 78a. Retornar lista
-
-      alt Alunos Encontrados
-        API -> Frontend: 79a. Exibir alunos
-        Frontend -> User: 80a. Lista de alunos
-
-        User -> Frontend: 81. Confirmar distribuição
-        Frontend -> API: 82. POST distribuir
-
-        API -> Trans: 83. BEGIN TRANSACTION
+        API -> Trans: 71. BEGIN TRANSACTION
+        activate Trans
         loop Para cada aluno
-          Trans -> BD: 84. INSERT resgate
-          Trans -> BD: 85. Atualizar status
+          Trans -> BD: 72. INSERT resgate
+          activate BD
+          BD -> Trans: 73. OK
+          deactivate BD
         end
-        Trans -> BD: 86. COMMIT
-        Trans -> API: 87. Completo
+        Trans -> BD: 74. COMMIT
+        activate BD
+        BD -> Trans: 75. Confirmado
+        deactivate BD
+        deactivate Trans
 
-        API -> Notif: 88. Enviar notificações
-        Notif -> User: 89. Email vantagem
-        API -> Frontend: 90. Sucesso
-        Frontend -> User: 91. Confirmação
+        API -> Queue: 76. Enfileirar notifs
+        activate Queue
+        Queue -> API: 77. Enfileiradas
+        deactivate Queue
 
-      else Nenhum Elegível
-        API -> Frontend: 79b. Aviso
-        Frontend -> User: 80b. Mensagem
+        API -> Notif: 78. Processar notifs
+        activate Notif
+        Notif -> User: 79. Email vantagem
+        Notif -> API: 80. Enviadas
+        deactivate Notif
+
+        API -> Frontend: 81. Sucesso
+        deactivate API
+        Frontend -> User: 82. Confirmação
+        deactivate Frontend
+
+      else Nenhum
+        API -> Frontend: 67b. Aviso
+        deactivate API
+        Frontend -> User: 68b. Mensagem
+        deactivate Frontend
       end
 
-    else Dados Inválidos
-      Valid -> API: 70b. Erro
-      API -> Frontend: 71b. Retornar erros
-      Frontend -> User: 72b. Mensagem erro
+    else Erro
+      Valid -> API: 57b. Erro
+      deactivate Valid
+      API -> Frontend: 58b. Erro validação
+      deactivate API
+      Frontend -> User: 59b. Erro
+      deactivate Frontend
     end
 
-  else Campos Inválidos
-    Frontend -> User: 68b. Exibir erros
+  else Inválido
+    Frontend -> User: 55b. Erro campos
+    deactivate Frontend
   end
 
 end
 
 == 4. LOGOUT ==
 
-User -> Frontend: 92. Clicar logout
-Frontend -> API: 93. POST /api/auth/logout
-API -> Auth: 94. Invalidar sessão
-API -> Frontend: 95. Redirecionar login
-Frontend -> User: 96. Página login
+User -> Frontend: 83. Logout
+activate Frontend
+Frontend -> API: 84. POST /api/auth/logout
+activate API
+API -> Frontend: 85. Redirecionar
+deactivate API
+Frontend -> User: 86. Login
+deactivate Frontend
 
 @enduml
