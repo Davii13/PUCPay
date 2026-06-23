@@ -14,7 +14,6 @@ public class ServerConfig {
     public ServletWebServerFactory servletWebServerFactory() throws UnknownHostException {
         TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory();
         factory.setAddress(InetAddress.getByName("0.0.0.0"));
-        factory.setPort(8080);
         return factory;
     }
 }
