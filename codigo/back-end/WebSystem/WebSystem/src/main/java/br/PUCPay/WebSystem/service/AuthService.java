@@ -6,6 +6,7 @@ import br.PUCPay.WebSystem.dao.ProfessorDAO;
 import br.PUCPay.WebSystem.dao.EmpresaDAO;
 import br.PUCPay.WebSystem.dto.LoginRequestDTO;
 import br.PUCPay.WebSystem.dto.LoginResponseDTO;
+import br.PUCPay.WebSystem.exception.UnauthorizedException;
 import br.PUCPay.WebSystem.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,10 @@ public class AuthService {
 
     public LoginResponseDTO login(LoginRequestDTO dto) {
         Usuario usuario = usuarioDAO.findByLogin(dto.getLogin())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new UnauthorizedException("Usuário não encontrado"));
 
         if (!usuario.getSenha().equals(dto.getSenha())) {
-            throw new RuntimeException("Senha incorreta");
+            throw new UnauthorizedException("Senha incorreta");
         }
 
         LoginResponseDTO response = new LoginResponseDTO();
