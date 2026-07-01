@@ -17,41 +17,23 @@ public class TransacaoController {
     private TransacaoService transacaoService;
 
     @PostMapping("/enviar")
-    public ResponseEntity<?> enviarMoedas(@RequestBody EnviarMoedasDTO dto) {
-        try {
-            Transacao transacao = transacaoService.enviarMoedas(dto);
-            return ResponseEntity.ok(transacao);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
-        }
+    public ResponseEntity<Transacao> enviarMoedas(@RequestBody EnviarMoedasDTO dto) {
+        return ResponseEntity.ok(transacaoService.enviarMoedas(dto));
     }
 
     @PostMapping("/resgatar")
-    public ResponseEntity<?> resgatarVantagem(@RequestBody ResgateDTO dto) {
-        try {
-            Transacao transacao = transacaoService.resgatarVantagem(dto);
-            return ResponseEntity.ok(transacao);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
-        }
+    public ResponseEntity<Transacao> resgatarVantagem(@RequestBody ResgateDTO dto) {
+        return ResponseEntity.ok(transacaoService.resgatarVantagem(dto));
     }
 
     @GetMapping("/cupom/{codigoCupom}")
-    public ResponseEntity<?> consultarCupom(@PathVariable String codigoCupom) {
-        try {
-            return ResponseEntity.ok(transacaoService.consultarCupom(codigoCupom));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
-        }
+    public ResponseEntity<Transacao> consultarCupom(@PathVariable String codigoCupom) {
+        return ResponseEntity.ok(transacaoService.consultarCupom(codigoCupom));
     }
 
     @PostMapping("/cupom/{codigoCupom}/validar")
-    public ResponseEntity<?> validarCupom(@PathVariable String codigoCupom) {
-        try {
-            return ResponseEntity.ok(transacaoService.validarCupom(codigoCupom));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
-        }
+    public ResponseEntity<Transacao> validarCupom(@PathVariable String codigoCupom) {
+        return ResponseEntity.ok(transacaoService.validarCupom(codigoCupom));
     }
 
     @GetMapping("/aluno/{id}")

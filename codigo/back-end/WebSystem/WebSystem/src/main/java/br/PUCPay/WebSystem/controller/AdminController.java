@@ -20,13 +20,8 @@ public class AdminController {
     private ProfessorService professorService;
 
     @PostMapping("/creditar")
-    public ResponseEntity<?> creditarMoedas(@RequestBody CreditarMoedasDTO dto) {
-        try {
-            Professor professor = adminService.creditarMoedas(dto);
-            return ResponseEntity.ok(professor);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
-        }
+    public ResponseEntity<Professor> creditarMoedas(@RequestBody CreditarMoedasDTO dto) {
+        return ResponseEntity.ok(adminService.creditarMoedas(dto));
     }
 
     @GetMapping("/professores")
