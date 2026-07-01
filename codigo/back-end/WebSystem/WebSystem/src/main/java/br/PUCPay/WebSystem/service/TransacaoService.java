@@ -7,6 +7,7 @@ import br.PUCPay.WebSystem.dao.VantagemDAO;
 import br.PUCPay.WebSystem.dto.EnviarMoedasDTO;
 import br.PUCPay.WebSystem.dto.ResgateDTO;
 import br.PUCPay.WebSystem.dto.ResgateNotificationMessage;
+import br.PUCPay.WebSystem.exception.BusinessException;
 import br.PUCPay.WebSystem.config.RabbitMQConfig;
 import br.PUCPay.WebSystem.model.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -48,25 +49,25 @@ public class TransacaoService {
     @Transactional
     public Transacao enviarMoedas(EnviarMoedasDTO dto) {
         if (dto == null || dto.getValor() == null) {
-            throw new RuntimeException("Dados da transação inválidos");
+            throw new BusinessException("Dados da transação inválidos");
         }
 
         Professor professor = professorDAO.findById(dto.getProfessorId());
-        if (professor == null) throw new RuntimeException("Professor não encontrado");
+        if (professor == null) throw new BusinessException("Professor não encontrado");
 
         Aluno aluno = alunoDAO.findById(dto.getAlunoId());
-        if (aluno == null) throw new RuntimeException("Aluno não encontrado");
+        if (aluno == null) throw new BusinessException("Aluno não encontrado");
 
         if (dto.getMensagem() == null || dto.getMensagem().isBlank()) {
-            throw new RuntimeException("A mensagem é obrigatória");
+            throw new BusinessException("A mensagem é obrigatória");
         }
 
         if (dto.getValor() <= 0) {
-            throw new RuntimeException("O valor enviado deve ser maior que zero");
+            throw new BusinessException("O valor enviado deve ser maior que zero");
         }
 
         if (professor.getSaldo() < dto.getValor()) {
-            throw new RuntimeException("Saldo insuficiente. Saldo atual: " + professor.getSaldo());
+            throw new BusinessException("Saldo insuficiente. Saldo atual: " + professor.getSaldo());
         }
 
         Double newProfessorBalance = professor.getSaldo() - dto.getValor();
@@ -108,17 +109,17 @@ public class TransacaoService {
     @Transactional
     public Transacao resgatarVantagem(ResgateDTO dto) {
         if (dto == null || dto.getAlunoId() == null || dto.getVantagemId() == null) {
-            throw new RuntimeException("Dados do resgate inválidos");
+            throw new BusinessException("Dados do resgate inválidos");
         }
 
         Aluno aluno = alunoDAO.findById(dto.getAlunoId());
-        if (aluno == null) throw new RuntimeException("Aluno não encontrado");
+        if (aluno == null) throw new BusinessException("Aluno não encontrado");
 
         Vantagem vantagem = vantagemDAO.findById(dto.getVantagemId());
-        if (vantagem == null) throw new RuntimeException("Vantagem não encontrada");
+        if (vantagem == null) throw new BusinessException("Vantagem não encontrada");
 
         if (aluno.getSaldo() < vantagem.getCusto()) {
-            throw new RuntimeException("Saldo insuficiente. Necessário: " + vantagem.getCusto() + " | Saldo: " + aluno.getSaldo());
+            throw new BusinessException("Saldo insuficiente. Necessário: " + vantagem.getCusto() + " | Saldo: " + aluno.getSaldo());
         }
 
         Double newBalance = aluno.getSaldo() - vantagem.getCusto();
@@ -166,7 +167,7 @@ public class TransacaoService {
 
     public Transacao consultarCupom(String codigoCupom) {
         return transacaoDAO.findByCodigoCupom(codigoCupom)
-                .orElseThrow(() -> new RuntimeException("Cupom não encontrado"));
+                .orElseThrow(() -> new BusinessException("Cupom não encontrado"));
     }
 
     @Transactional
@@ -174,11 +175,11 @@ public class TransacaoService {
         Transacao transacao = consultarCupom(codigoCupom);
 
         if (transacao.getTipo() != Transacao.Tipo.RESGATE || transacao.getVantagem() == null) {
-            throw new RuntimeException("Cupom inválido para resgate de vantagem");
+            throw new BusinessException("Cupom inválido para resgate de vantagem");
         }
 
         if (transacao.getStatusCupom() == Transacao.StatusCupom.USADO) {
-            throw new RuntimeException("Cupom já foi utilizado");
+            throw new BusinessException("Cupom já foi utilizado");
         }
 
         transacao.setStatusCupom(Transacao.StatusCupom.USADO);
