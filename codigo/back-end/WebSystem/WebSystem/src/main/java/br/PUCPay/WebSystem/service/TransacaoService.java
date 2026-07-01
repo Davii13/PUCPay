@@ -57,17 +57,7 @@ public class TransacaoService {
         Aluno aluno = alunoDAO.findById(dto.getAlunoId());
         if (aluno == null) throw new RuntimeException("Aluno não encontrado");
 
-        if (dto.getMensagem() == null || dto.getMensagem().isBlank()) {
-            throw new RuntimeException("A mensagem é obrigatória");
-        }
-
-        if (dto.getValor() <= 0) {
-            throw new RuntimeException("O valor enviado deve ser maior que zero");
-        }
-
-        if (professor.getSaldo() < dto.getValor()) {
-            throw new RuntimeException("Saldo insuficiente. Saldo atual: " + professor.getSaldo());
-        }
+        validarEnvioMoedas(dto, professor);
 
         Double newProfessorBalance = professor.getSaldo() - dto.getValor();
         Double newAlunoBalance = aluno.getSaldo() + dto.getValor();
@@ -103,6 +93,20 @@ public class TransacaoService {
         }
 
         return salva;
+    }
+
+    private void validarEnvioMoedas(EnviarMoedasDTO dto, Professor professor) {
+        if (dto.getMensagem() == null || dto.getMensagem().isBlank()) {
+            throw new RuntimeException("A mensagem é obrigatória");
+        }
+
+        if (dto.getValor() <= 0) {
+            throw new RuntimeException("O valor enviado deve ser maior que zero");
+        }
+
+        if (professor.getSaldo() < dto.getValor()) {
+            throw new RuntimeException("Saldo insuficiente. Saldo atual: " + professor.getSaldo());
+        }
     }
 
     @Transactional
